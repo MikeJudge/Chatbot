@@ -1,0 +1,51 @@
++hi user
+-hi bot
+-hello
+-howdy
+-yo
+
++one pizza coming right up
+-order me a pizza
+-order a pizza
+-order us a pizza
+-pizza please
+
++Blue
+-What is your favorite color
+-what is your most favorite color?
+-favorite color?
+
++Basketball
+-What is your favorite sport?
+-What sport do you enjoy?
+-favorite sport?
+-what sport do you like?
+
++I see my son running around
+-When you are there what do you see?
+-What do you see when you are there?
+-What is he doing when you are there?
+-What do you see your son doing?
+
++If you were there, you would see my son running around
+-If I was there, what would I see?
+-What would I see if I were there?
+-What would he do I were there?
+-What would I see your son doing?
+
++No there has not
+-Has there ever been a time this was not a problem?
+-In the past, was there a time this was not seen as a problem
+-Has there ever been a time when this was not an issue
+-In the past, was there a time this was notseen as a problem
+-Looking back with your son was this ever OK?
+
++Things were better
+-What happened then that was different?
+-What was different then?
+-What was different before
+
++The ideal solution
+-What would you see as the ideal solution?
+-What is the best solution in your eyes
+-What would you like the outcome to be?

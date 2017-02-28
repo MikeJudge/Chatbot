@@ -1,0 +1,23 @@
+{% if dialog %}
+  <ul id="message_list">
+     {% for message in dialog %}
+        <li>
+           <div class="text">
+              User: {{ message[0] }}
+           </div>
+
+           <div class="text">
+              Bot: {{ message[1] }}
+           </div>
+        </li>
+     {% endfor %}
+  </ul>
+
+{% endif %}
+
+
+
+<form action="." method="POST">
+  <input type="text" name="input_text">
+  <input type="submit" value="send">
+</form>
