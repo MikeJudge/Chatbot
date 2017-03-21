@@ -2,8 +2,10 @@ import math
 import os
 
 
-#input:  dictionary d, list of strings l
+#input:  d - dictionary
+#        l - list of strings l
 #updates dictionary with frequency of strings in l
+
 def add_dict(d, l):
     for token in l:
         if token in d:
@@ -11,33 +13,38 @@ def add_dict(d, l):
         else:
             d[token] = 1
 
+
+#input:  line - String
+#output: list of token strings
+
 def tokenize(line):
 	result = line.lower().split()
-	for i in xrange(len(result)):
+	for i in xrange(len(result)): #remove punctuation marks
 		if not result[i][-1].isalnum():
 			result[i] = result[i][:-1]
 	return result
 
 
 #input: file to learn from
+#won't be needed when the database class is implemented
+
 def process(input_file):
     l = []
     f = open(input_file, 'r')
 
     curr_reply = ''        
     curr_counts = {}       #token counts
-    curr_num_inputs = 0    #number of inputs corresponding to current reply
     curr_num_tokens = 0    #number of tokens in all inputs to current reply
-    total_inputs = 0       #total number of inputs in the file
+    curr_id = -1
+    transitions_count = {}
     
     for line in f:
         if line[0] == '\n': #marks end of this reply: get ready for next reply in file
-            l.append((curr_reply, curr_num_inputs, curr_counts, curr_num_tokens))
+            l.append((curr_reply, curr_counts, curr_num_tokens , curr_id))
             curr_reply = ''
             curr_counts = {}
-            curr_num_inputs = 0
             curr_num_tokens = 0
-
+            curr_id = -1
 
         elif line[0] == '+': #new reply
             curr_reply = line[1:-1] #extract string part from line
@@ -45,9 +52,15 @@ def process(input_file):
         elif line[0] == '-': #input line
             line_arr = tokenize(line[1:]) #preprocess line
             add_dict(curr_counts, line_arr) #update token counts
-            curr_num_inputs += 1
             curr_num_tokens += len(line_arr)
-            total_inputs += 1
+
+        elif line[0] == '%': # reply ids of replies that come after this id'
+            temp = line[1:].split()
+            for i in temp:
+                transitions_count[(curr_id, int(i))] = 1
+
+        elif line[0] == '#': #reply id
+            curr_id = int(line[1:].split()[0])
 
         else: #continuation of input onto a new line
             line_arr = tokenize(line[1:])
@@ -56,18 +69,24 @@ def process(input_file):
 
 
     if len(curr_reply) != 0: #if we still have a reply in the buffer
-        l.append((curr_reply, curr_num_inputs, curr_counts, curr_num_tokens))
+        l.append((curr_reply, curr_counts, curr_num_tokens , curr_id))
     
     f.close()
-    return l, total_inputs
+    return l, transitions_count
 
             
-#input: dictionary counts, total number of tokens total_count, smoothing constant        
+#input:  counts - dictionary of token:count
+#        total_count - total number of tokens in counts 
+#        smoothing - smoothing constant: "steal from the rich and give to the needy"       
+#output: dictionary of token:log_prob
+
 def log_probs(counts, total_count, smoothing):
     result = {}
     #compute log-probabilities to avoid underflow
     for token, count in counts.iteritems():
         result[token] = math.log(count + smoothing) - math.log(total_count + smoothing*(len(counts) + 1))
+
+    #generic token to be used when need prob for a token not seen before
     result['<UNK>'] = math.log(smoothing) - math.log(total_count + smoothing*(len(counts) + 1))
     return result
 
@@ -76,26 +95,44 @@ def log_probs(counts, total_count, smoothing):
 
 class Bot(object):
 
-    #input: input filepath as a string, smoothing constant
+    #input: input_file - filepath as a string
+    #       smoothing  - smoothing constant
+
     def __init__(self, input_file, smoothing):
-        print 'initializing'
-        l, total_inputs = process(input_file)
-        self.kb = []
+        l, transitions_count = process(input_file)
+        self.kb = {}
+        self.previous_response_id = -1 #keep track of previous response made from bot
+
         #initialize knowledge base with input
-        for reply, num_inputs, counts, num_tokens in l:
-            self.kb.append((reply, log_probs(counts, num_tokens, smoothing), math.log(num_inputs) - math.log(total_inputs)))
+        for reply, counts, num_tokens, response_id in l:
+            self.kb[response_id] = ((reply, log_probs(counts, num_tokens, smoothing)))
         
+        #initialize transition probabilities dictionary
+        self.transition_prob = log_probs(transitions_count, len(transitions_count), 1e-15)
+
+
+
+    #input:  response_old - previous response id
+    #        response_new - potential curr reponse id
+    #output: log probability of this transition occuring
+
+    def get_prob_trans(self, response_old, response_new):
+        if (response_old, response_new) in self.transition_prob:
+            return self.transition_prob[(response_old, response_new)]
+        else:
+            return self.transition_prob['<UNK>']
         
 
-    #input: string
-    #ouput: list ordered from best to worst response probabilistically
+    #input: input - user query
+    #ouput: list with ordered responses from greatest to lowest probability, (reply, prob, id)
+
     def reply(self, input):
-        input_arr = input.lower().split() #preprocess to all lowercase and split on whitespace
+        input_arr = input.lower().split() #preprocess input
         result = []
-        divisor = float(0)
 
-        #compute probability of response given this input for all replies in KB
-        for curr_reply, reply_probs, prob in self.kb:
+        #compute probability of response given this input, and previous reponse_id for all replies in KB
+        for response_id in self.kb:
+            curr_reply, reply_probs = self.kb[response_id]
             total = float(0)
 
             for token in input_arr:
@@ -103,26 +140,20 @@ class Bot(object):
                     total += reply_probs[token]
                 else:
                     total += reply_probs['<UNK>'] #special word used when we've never seen this token before
-            total += prob
-            total = math.exp(total)
-            divisor += total
-            result.append((curr_reply, total))
 
-        for i in xrange(len(result)):
-        	result[i] = (result[i][0], result[i][1]/divisor)
-
-
+            result.append((curr_reply, total + self.get_prob_trans(self.previous_response_id, response_id), response_id))
+            
 
         #sort list from highest probability to lowest probability
         result.sort(key = lambda x: x[1], reverse = True)
-        print result
+        self.previous_response_id = result[0][2]
         return result
 
 
-'''b = Bot("test.txt", 1e-2)
+b = Bot("test.txt", 1e-4)
 s = ''
 while s != 'exit':
     s = raw_input("User: ")
     for x in b.reply(s):
     	print x
-    print ""'''
+    print ""
