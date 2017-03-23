@@ -51,11 +51,4 @@ class Response_Node:
 	#input: Response_Node neighbor to remove from this.neighbors
 	def remove_neighbor(self, neighbor):
 		self.neighbors.remove(neighbor)
-
-
-
-
-
-
-
-
+		
