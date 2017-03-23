@@ -93,7 +93,7 @@ def log_probs(counts, total_count, smoothing):
             
 
 
-class Bot(object):
+class Bot:
 
     #input: input_file - filepath as a string
     #       smoothing  - smoothing constant
