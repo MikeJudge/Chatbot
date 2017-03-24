@@ -1,8 +1,11 @@
 import math
 import os
+from Scenario import Scenario
+from Dialog import Dialog
+from Response_Node import Response_Node
 
 
-#input:  d - dictionary
+'''#input:  d - dictionary
 #        l - list of strings l
 #updates dictionary with frequency of strings in l
 
@@ -11,7 +14,7 @@ def add_dict(d, l):
         if token in d:
             d[token] += 1
         else:
-            d[token] = 1
+            d[token] = 1'''
 
 
 #input:  line - String
@@ -24,7 +27,7 @@ def tokenize(line):
 			result[i] = result[i][:-1]
 	return result
 
-
+'''
 #input: file to learn from
 #won't be needed when the database class is implemented
 
@@ -73,6 +76,19 @@ def process(input_file):
     
     f.close()
     return l, transitions_count
+'''
+
+def process(questions):
+	counts = {}
+	num_tokens = 0
+	for question in questions:
+		for token in tokenize(question):
+			num_tokens += 1
+			if token not in counts:
+				counts[token] = 0
+			counts[token] += 1
+
+	return counts, num_tokens
 
             
 #input:  counts - dictionary of token:count
@@ -90,25 +106,47 @@ def log_probs(counts, total_count, smoothing):
     result['<UNK>'] = math.log(smoothing) - math.log(total_count + smoothing*(len(counts) + 1))
     return result
 
+
+
+def get_transitions(responses, temp_map):
+	transitions = {}
+	for response in responses:
+		curr_id = temp_map[response]
+		for neighbor in response.get_neighbors():
+			transitions[(curr_id, temp_map[neighbor])] = 1
+
+	return transitions
+
             
 
 
 class Bot:
 
-    #input: input_file - filepath as a string
+    #input: scenario - Scenario Object
     #       smoothing  - smoothing constant
 
-    def __init__(self, input_file, smoothing):
-        l, transitions_count = process(input_file)
-        self.kb = {}
+    def __init__(self, scenario, smoothing):
+        #l, transitions_count = process(input_file)
+        self.kb = []
         self.previous_response_id = -1 #keep track of previous response made from bot
 
+        dialog = scenario.get_dialog()
+        temp_map = {}
+        count = 0
         #initialize knowledge base with input
-        for reply, counts, num_tokens, response_id in l:
-            self.kb[response_id] = ((reply, log_probs(counts, num_tokens, smoothing)))
+        for response in dialog.get_responses():
+        	counts, num_tokens = process(response.get_questions())
+        	self.kb.append((response.get_response(), log_probs(counts, num_tokens, smoothing), count))
+        	temp_map[response] = count
+        	count += 1
         
+        transitions = get_transitions(dialog.get_responses(), temp_map)
         #initialize transition probabilities dictionary
-        self.transition_prob = log_probs(transitions_count, len(transitions_count), 1e-15)
+        self.transition_prob = log_probs(transitions, len(transitions), 1e-15)
+
+        print self.kb
+        print ""
+        print self.transition_prob
 
 
 
@@ -126,13 +164,12 @@ class Bot:
     #input: input - user query
     #ouput: list with ordered responses from greatest to lowest probability, (reply, prob, id)
 
-    def reply(self, input):
-        input_arr = input.lower().split() #preprocess input
+    def reply(self, query):
+        input_arr = tokenize(query) #preprocess input
         result = []
 
         #compute probability of response given this input, and previous reponse_id for all replies in KB
-        for response_id in self.kb:
-            curr_reply, reply_probs = self.kb[response_id]
+        for curr_reply, reply_probs, response_id in self.kb:
             total = float(0)
 
             for token in input_arr:
@@ -150,7 +187,71 @@ class Bot:
         return result
 
 
-b = Bot("test.txt", 1e-4)
+
+responses = set()
+questions = set()
+questions.add('Has there ever been a time this was not a problem?')
+questions.add('In the past, was there a time this was not seen as a problem')
+questions.add('Has there ever been a time when this was not an issue')
+questions.add('Looking back with your son was this ever OK?')
+questions.add('In the past, was there a time this was not seen as a problem')
+response = Response_Node("At one time there was a problem with my device", questions, set())
+responses.add(response)
+
+
+questions = set()
+questions.add('Have you spoken with anyone else about this?')
+questions.add('Have you consulted anyone else about this problem?')
+questions.add('Have you talked to anyone yet?')
+response = Response_Node("I have spoken to many people about this problem", questions, set())
+responses.add(response)
+
+questions = set()
+questions.add('If I was there, what would I see?')
+questions.add('What would I see if I were there?')
+questions.add('What would he do I were there?')
+questions.add('What would I see your son doing?')
+response = Response_Node("If you were there, you would see my son running around", questions, set())
+responses.add(response)
+
+
+questions = set()
+questions.add('why')
+response = Response_Node("because that is the solution we have been looking for", questions, set())
+responses.add(response)
+
+
+
+questions = set()
+questions.add('What would you see as the ideal solution?')
+questions.add('What is the best solution in your eyes')
+questions.add('What would you like the outcome to be?')
+neighbors = set()
+neighbors.add(response)
+response = Response_Node("The ideal solution", questions, neighbors)
+responses.add(response)
+
+
+questions = set()
+questions.add('why')
+response = Response_Node("because it is", questions, set())
+responses.add(response)
+
+
+questions = set()
+questions.add('what color is the sky')
+questions.add('is the color of the sky green?')
+neighbors = set()
+neighbors.add(response)
+response = Response_Node("the sky is blue", questions, neighbors)
+responses.add(response)
+
+dialog = Dialog(responses)
+scenario = Scenario("mike Judge", "test description", None, dialog)
+
+
+
+b = Bot(scenario, 1e-8)
 s = ''
 while s != 'exit':
     s = raw_input("User: ")
