@@ -5,11 +5,11 @@ class Dialog:
 		self.responses = responses
 
 
-	#output: set of responses in this
+	#output: set of Response_Node in this
 	def get_responses(self):
 		return self.responses
 
-	#input: set of responses to represent this dialog
+	#input: set of Response_Node to represent this dialog
 	def set_responses(self, responses):
 		self.responses = responses
 

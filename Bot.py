@@ -5,18 +5,6 @@ from Dialog import Dialog
 from Response_Node import Response_Node
 
 
-'''#input:  d - dictionary
-#        l - list of strings l
-#updates dictionary with frequency of strings in l
-
-def add_dict(d, l):
-    for token in l:
-        if token in d:
-            d[token] += 1
-        else:
-            d[token] = 1'''
-
-
 #input:  line - String
 #output: list of token strings
 
@@ -27,56 +15,10 @@ def tokenize(line):
 			result[i] = result[i][:-1]
 	return result
 
-'''
-#input: file to learn from
-#won't be needed when the database class is implemented
 
-def process(input_file):
-    l = []
-    f = open(input_file, 'r')
-
-    curr_reply = ''        
-    curr_counts = {}       #token counts
-    curr_num_tokens = 0    #number of tokens in all inputs to current reply
-    curr_id = -1
-    transitions_count = {}
-    
-    for line in f:
-        if line[0] == '\n': #marks end of this reply: get ready for next reply in file
-            l.append((curr_reply, curr_counts, curr_num_tokens , curr_id))
-            curr_reply = ''
-            curr_counts = {}
-            curr_num_tokens = 0
-            curr_id = -1
-
-        elif line[0] == '+': #new reply
-            curr_reply = line[1:-1] #extract string part from line
-
-        elif line[0] == '-': #input line
-            line_arr = tokenize(line[1:]) #preprocess line
-            add_dict(curr_counts, line_arr) #update token counts
-            curr_num_tokens += len(line_arr)
-
-        elif line[0] == '%': # reply ids of replies that come after this id'
-            temp = line[1:].split()
-            for i in temp:
-                transitions_count[(curr_id, int(i))] = 1
-
-        elif line[0] == '#': #reply id
-            curr_id = int(line[1:].split()[0])
-
-        else: #continuation of input onto a new line
-            line_arr = tokenize(line[1:])
-            add_dict(curr_counts, line_arr)
-            curr_num_tokens += len(line_arr)
-
-
-    if len(curr_reply) != 0: #if we still have a reply in the buffer
-        l.append((curr_reply, curr_counts, curr_num_tokens , curr_id))
-    
-    f.close()
-    return l, transitions_count
-'''
+#input:  questions  - list of strings
+#output: counts     - dictionary of token:count
+#        num_tokens - total number of tokens in questions list  
 
 def process(questions):
 	counts = {}
@@ -108,67 +50,70 @@ def log_probs(counts, total_count, smoothing):
 
 
 
+#input:  responses - set of Response_Node
+#        temp_map  - dict of Response_Node:int
+#output: dict of (start id, neighbor id) all mapped to 1
+
 def get_transitions(responses, temp_map):
 	transitions = {}
 	for response in responses:
-		curr_id = temp_map[response]
+		curr_id = temp_map[response] #look up id for starting response in dict
+
+        #for each neighbor from this start response, add (start id, neighbor id) to dict
 		for neighbor in response.get_neighbors():
 			transitions[(curr_id, temp_map[neighbor])] = 1
 
 	return transitions
 
-            
 
+#input:  transition_prob - dict mapping (curr id, next id):log_prob
+#        response_old    - previous response id
+#        response_new    - potential curr reponse id
+#output: log probability of this transition occuring
+
+def get_prob_trans(transition_prob, response_old, response_new):
+    if (response_old, response_new) in transition_prob:
+        return transition_prob[(response_old, response_new)]
+    else:
+        return transition_prob['<UNK>']
+
+            
 
 class Bot:
 
-    #input: scenario - Scenario Object
+    #input: scenario   - Scenario Object
     #       smoothing  - smoothing constant
 
     def __init__(self, scenario, smoothing):
-        #l, transitions_count = process(input_file)
-        self.kb = []
-        self.previous_response_id = -1 #keep track of previous response made from bot
+        print 'initializing'
+        self.kb = [] #kb of (response, log_probs dict, response_id) tuples
 
         dialog = scenario.get_dialog()
-        temp_map = {}
-        count = 0
-        #initialize knowledge base with input
+        temp_map = {}  # used to help create the transition probs
+        count = 0      # used for giving ids to responses
+
+        #initialize knowledge base with dialog from scenario
         for response in dialog.get_responses():
         	counts, num_tokens = process(response.get_questions())
         	self.kb.append((response.get_response(), log_probs(counts, num_tokens, smoothing), count))
-        	temp_map[response] = count
+        	temp_map[response] = count #this map will be used to look up response objects to their ids
         	count += 1
         
         transitions = get_transitions(dialog.get_responses(), temp_map)
         #initialize transition probabilities dictionary
         self.transition_prob = log_probs(transitions, len(transitions), 1e-15)
 
-        print self.kb
-        print ""
-        print self.transition_prob
-
-
-
-    #input:  response_old - previous response id
-    #        response_new - potential curr reponse id
-    #output: log probability of this transition occuring
-
-    def get_prob_trans(self, response_old, response_new):
-        if (response_old, response_new) in self.transition_prob:
-            return self.transition_prob[(response_old, response_new)]
-        else:
-            return self.transition_prob['<UNK>']
         
 
-    #input: input - user query
+    #input: query         - string representing string from user
+    #       prev_response - id of response previously made from bot
     #ouput: list with ordered responses from greatest to lowest probability, (reply, prob, id)
 
-    def reply(self, query):
+    def reply(self, prev_response, query):
         input_arr = tokenize(query) #preprocess input
         result = []
 
-        #compute probability of response given this input, and previous reponse_id for all replies in KB
+        #compute probability of response given this query, and previous reponse_id for all replies in KB
         for curr_reply, reply_probs, response_id in self.kb:
             total = float(0)
 
@@ -178,12 +123,11 @@ class Bot:
                 else:
                     total += reply_probs['<UNK>'] #special word used when we've never seen this token before
 
-            result.append((curr_reply, total + self.get_prob_trans(self.previous_response_id, response_id), response_id))
+            result.append((curr_reply, total + get_prob_trans(self.transition_prob, prev_response, response_id), response_id))
             
 
         #sort list from highest probability to lowest probability
         result.sort(key = lambda x: x[1], reverse = True)
-        self.previous_response_id = result[0][2]
         return result
 
 
@@ -250,11 +194,13 @@ dialog = Dialog(responses)
 scenario = Scenario("mike Judge", "test description", None, dialog)
 
 
-
+prev_response = -1
 b = Bot(scenario, 1e-8)
 s = ''
 while s != 'exit':
     s = raw_input("User: ")
-    for x in b.reply(s):
-    	print x
+    y = b.reply(prev_response, s)
+    for x in y:
+        print x
+    prev_response = y[0][2]
     print ""
