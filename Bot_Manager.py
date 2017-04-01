@@ -10,6 +10,9 @@ class Bot_Manager:
 		self.load_bots()
 
 
+	#loads the data stored in MongoDB for each scenario, respawns them into scenario objects
+	#and uses it to create Bots. Bots are stored in bot_map as Name_of_person:Bot
+
 	def load_bots(self):
 		client = MongoClient('localhost', 27017)
 		db = client.bot_database
@@ -22,6 +25,8 @@ class Bot_Manager:
 		client.close()
 
 
+	#input:  string representing name of person in scenario
+	#ouptut: bot mapped to the name
 
 	def get_bot(self, key):
 		return self.bot_map[key]
