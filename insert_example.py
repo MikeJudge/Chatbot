@@ -1,11 +1,16 @@
-from flask import Flask, render_template, session, request, flash, g
+import math
 import os
+import pickle
 from Scenario import Scenario
 from Dialog import Dialog
 from Response_Node import Response_Node
-from Bot import Bot
+import pymongo
+from pymongo import MongoClient
 
-app = Flask(__name__)
+client = MongoClient('localhost', 27017)
+db = client.bot_database
+
+scenarios = db.scenario
 
 
 responses = set()
@@ -69,27 +74,8 @@ responses.add(response)
 dialog = Dialog(responses)
 scenario = Scenario("mike Judge", "test description", None, dialog)
 
-
-
-b = Bot(scenario, 1e-8)
-
-@app.route("/", methods=['POST', 'GET'])
-def home():
-   if request.method == 'GET':
-      session['dialog'] = []
-      return render_template('chat.html')
-
-   s = request.form['input_text']
-   l = session['dialog']
-   l.append((s, b.reply(s)[0][0]))
-   session['dialog'] = l
-
-   return render_template('chat.html', dialog = l)
+scenarios.insert_one({'data':pickle.dumps(scenario)})
 
 
 
-app.secret_key = 'secret key'
-if __name__ == "__main__":
-   app.config['SESSION_TYPE'] = 'filesystem'
-   app.run()
-
+client.close()
