@@ -3,11 +3,13 @@ class Response_Node:
 	#input: response  - response String
 	#       questions - set of strings representing questions that trigger this response
 	#       neighbors - set of Response_Node. These are responses to questions that can follow this one
+	#	    points    - number of points awarded when response is made
 
-	def __init__(self, response, questions, neighbors):
+	def __init__(self, response, questions, neighbors, points):
 		self.response = response
 		self.questions = questions
 		self.neighbors = neighbors
+		self.points = points
 
 
 	#output: this response
@@ -35,6 +37,7 @@ class Response_Node:
 	def remove_question(self, question):
 		self.questions.remove(question)
 
+
 	#output: this neighbors
 	def get_neighbors(self):
 		return self.neighbors
@@ -51,4 +54,13 @@ class Response_Node:
 	#input: Response_Node neighbor to remove from this.neighbors
 	def remove_neighbor(self, neighbor):
 		self.neighbors.remove(neighbor)
+
+
+	#input: points int
+	def set_points(self, points):
+		self.points = points
+
+	#output: this points
+	def get_points(self):
+		return self.points
 		

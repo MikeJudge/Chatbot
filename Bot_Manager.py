@@ -37,11 +37,17 @@ test = Bot_Manager()
 b = test.get_bot("mike Judge")
 s = ''
 prev_response = -1 #initial id
-while s != 'exit':
+points = 0
+while True:
     s = raw_input("User: ")
+    if s == 'exit':
+    	break
     y =  b.reply(prev_response, s)
     for x in y:
     	print x
     print ""
     prev_response = y[0][2]
+    points += y[0][3]
+
+print 'points: ' + str(points) + "out of: " + str(b.get_total_points())
 

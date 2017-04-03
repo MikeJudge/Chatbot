@@ -91,11 +91,12 @@ class Bot:
         dialog = scenario.get_dialog()
         temp_map = {}  # used to help create the transition probs
         count = 0      # used for giving ids to responses
+        self.total_points = dialog.get_total_points()
 
         #initialize knowledge base with dialog from scenario
         for response in dialog.get_responses():
         	counts, num_tokens = process(response.get_questions())
-        	self.kb.append((response.get_response(), log_probs(counts, num_tokens, smoothing), count))
+        	self.kb.append((response.get_response(), log_probs(counts, num_tokens, smoothing), count, response.get_points()))
         	temp_map[response] = count #this map will be used to look up response objects to their ids
         	count += 1
         
@@ -114,7 +115,7 @@ class Bot:
         result = []
 
         #compute probability of response given this query, and previous reponse_id for all replies in KB
-        for curr_reply, reply_probs, response_id in self.kb:
+        for curr_reply, reply_probs, response_id, points in self.kb:
             total = float(0)
 
             for token in input_arr:
@@ -123,10 +124,14 @@ class Bot:
                 else:
                     total += reply_probs['<UNK>'] #special word used when we've never seen this token before
 
-            result.append((curr_reply, total + get_prob_trans(self.transition_prob, prev_response, response_id), response_id))
+            result.append((curr_reply, total + get_prob_trans(self.transition_prob, prev_response, response_id), response_id, points))
             
 
         #sort list from highest probability to lowest probability
         result.sort(key = lambda x: x[1], reverse = True)
         return result
 
+
+    #output: total possible points in this dialog int
+    def get_total_points(self):
+        return self.total_points

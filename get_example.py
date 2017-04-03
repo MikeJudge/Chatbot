@@ -18,6 +18,7 @@ for scenario in scenarios.find():
 	print t.get_description()
 	print t.image
 	dialog = t.get_dialog()
+	print dialog.get_total_points()
 	responses = dialog.get_responses()
 	for response in responses:
 		print ""
@@ -25,6 +26,8 @@ for scenario in scenarios.find():
 		print response.get_response()
 		print response.get_questions()
 		print response.get_neighbors()
+		print response.get_points()
+	#scenarios.delete_one(scenario)
 	'''t.set_name('new_name')
 	scenario['data'] = pickle.dumps(t)
 	scenarios.save(scenario)'''
