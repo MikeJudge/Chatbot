@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import pickle
 from Scenario import Scenario
 from Bot import Bot
+from Scenario_DB import Scenario_DB
 
 class Bot_Manager:
 
@@ -14,15 +15,9 @@ class Bot_Manager:
 	#and uses it to create Bots. Bots are stored in bot_map as Name_of_person:Bot
 
 	def load_bots(self):
-		client = MongoClient('localhost', 27017)
-		db = client.bot_database
-
-		scenarios = db.scenario
-		for scenario in scenarios.find():
-			scenario = pickle.loads(scenario['data'])
+		db = Scenario_DB()
+		for scenario_doc, scenario in db.get_scenarios():
 			self.bot_map[scenario.get_name()] = Bot(scenario, 1e-8)
-
-		client.close()
 
 
 	#input:  string representing name of person in scenario

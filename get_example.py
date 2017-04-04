@@ -5,17 +5,16 @@ from Scenario import Scenario
 from Dialog import Dialog
 from Response_Node import Response_Node
 from pymongo import MongoClient
-
-client = MongoClient('localhost', 27017)
-db = client.bot_database
-
-scenarios = db.scenario
+from Scenario_DB import Scenario_DB
 
 
-for scenario in scenarios.find():
-	t = pickle.loads(scenario['data'])
-	print t.get_name()
-	print t.get_description()
+db = Scenario_DB()
+
+
+
+for key, scenario in db.get_scenarios():
+	print key
+	'''print t.get_description()
 	print t.image
 	dialog = t.get_dialog()
 	print dialog.get_total_points()
@@ -26,14 +25,7 @@ for scenario in scenarios.find():
 		print response.get_response()
 		print response.get_questions()
 		print response.get_neighbors()
-		print response.get_points()
-	#scenarios.delete_one(scenario)
-	'''t.set_name('new_name')
-	scenario['data'] = pickle.dumps(t)
-	scenarios.save(scenario)'''
+		print response.get_points()'''
+	#db.delete_scenario(doc)
 
 
-		
-
-
-client.close()

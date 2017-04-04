@@ -6,11 +6,11 @@ from Dialog import Dialog
 from Response_Node import Response_Node
 import pymongo
 from pymongo import MongoClient
+from Scenario_DB import Scenario_DB
 
-client = MongoClient('localhost', 27017)
-db = client.bot_database
 
-scenarios = db.scenario
+db = Scenario_DB()
+
 
 
 responses = set()
@@ -74,8 +74,4 @@ responses.add(response)
 dialog = Dialog(responses)
 scenario = Scenario("mike Judge", "test description", None, dialog)
 
-scenarios.insert_one({'data':pickle.dumps(scenario)})
-
-
-
-client.close()
+db.add_scenario(scenario)
