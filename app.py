@@ -41,16 +41,18 @@ def admin():
 
 @app.route("/chat/<name>", methods=['POST', 'GET'])
 def chat(name):
-   bot = manager.get_bot(name) #the name parameter in web address is looked up in bot db
-   if bot == None: #bad request, the bot for this scenario doesn't exist
+   #the name parameter in web address is looked up in bot db
+   if manager.get_bot(name) == None: #bad request, the bot for this scenario doesn't exist
       return "bot not found"
+
+   bot, scenario = manager.get_bot(name)
 
    if request.method == 'GET': #first time visiting page, initialize user data
       session['dialog'] = []
       session['prev_response'] = -1
       session['score'] = 0
       session['prev_response_ids'] = []
-      return render_template('chat.html')
+      return render_template('chat.html', scenario = scenario)
 
    s = request.form['input_text'] #get input from user
    dialog = session['dialog']
@@ -72,7 +74,8 @@ def chat(name):
    session['score'] = curr_score
    session['prev_response_ids'] = prev_response_ids
 
-   return render_template('chat.html', dialog = dialog, score = curr_score, max_score = bot.get_total_points())
+   #send data to render_template in order to display it to the user
+   return render_template('chat.html', dialog = dialog, score = curr_score, scenario = scenario)
    
 
 

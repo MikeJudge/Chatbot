@@ -12,12 +12,12 @@ class Bot_Manager:
 
 
 	#loads the data stored in MongoDB for each scenario, respawns them into scenario objects
-	#and uses it to create Bots. Bots are stored in bot_map as Name_of_person:Bot
+	#and uses it to create Bots. Bots are stored in bot_map as Name_of_person:(Bot,Scenario)
 
 	def load_bots(self):
 		db = Scenario_DB()
 		for scenario_doc, scenario in db.get_scenarios():
-			self.bot_map[scenario.get_name()] = Bot(scenario, 1e-8)
+			self.bot_map[scenario.get_name()] = (Bot(scenario, 1e-8), scenario)
 
 
 	#input:  string representing name of person in scenario

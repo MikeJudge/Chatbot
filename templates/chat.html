@@ -14,12 +14,18 @@
   </ul>
 
   <div class="text">
-        Points: {{ score }} out of {{ max_score }} <br>
+        Points: {{ score }} out of {{ scenario.get_dialog().get_total_points() }} <br>
   </div>
 
 {% endif %}
 
+<div class="text">
+        Name: {{ scenario.get_name() }} <br>
+</div>
 
+<div class="text">
+        Description: {{ scenario.get_description() }} <br>
+</div>
 
 <form method="POST">
   <input type="text" name="input_text">

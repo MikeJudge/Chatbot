@@ -91,7 +91,6 @@ class Bot:
         dialog = scenario.get_dialog()
         temp_map = {}  # used to help create the transition probs
         count = 0      # used for giving ids to responses
-        self.total_points = dialog.get_total_points()
 
         #initialize knowledge base with dialog from scenario
         for response in dialog.get_responses():
@@ -130,8 +129,3 @@ class Bot:
         #sort list from highest probability to lowest probability
         result.sort(key = lambda x: x[1], reverse = True)
         return result
-
-
-    #output: total possible points in this dialog int
-    def get_total_points(self):
-        return self.total_points
