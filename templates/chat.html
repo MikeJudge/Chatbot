@@ -13,11 +13,15 @@
      {% endfor %}
   </ul>
 
+  <div class="text">
+        Points: {{ score }} out of {{ max_score }} <br>
+  </div>
+
 {% endif %}
 
 
 
-<form action="." method="POST">
+<form method="POST">
   <input type="text" name="input_text">
   <input type="submit" value="send">
 </form>

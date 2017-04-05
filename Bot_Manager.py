@@ -21,13 +21,15 @@ class Bot_Manager:
 
 
 	#input:  string representing name of person in scenario
-	#ouptut: bot mapped to the name
+	#ouptut: bot mapped to the name, or None if not found
 
 	def get_bot(self, key):
+		if key not in self.bot_map:
+			return None
 		return self.bot_map[key]
 
 
-
+'''
 test = Bot_Manager()
 b = test.get_bot("mike Judge")
 s = ''
@@ -44,5 +46,5 @@ while True:
     prev_response = y[0][2]
     points += y[0][3]
 
-print 'points: ' + str(points) + "out of: " + str(b.get_total_points())
+print 'points: ' + str(points) + "out of: " + str(b.get_total_points())'''
 

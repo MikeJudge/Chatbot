@@ -72,6 +72,6 @@ response = Response_Node("the sky is blue", questions, neighbors, 7)
 responses.add(response)
 
 dialog = Dialog(responses)
-scenario = Scenario("mike Judge", "test description", None, dialog)
+scenario = Scenario("mike", "test description", None, dialog)
 
 db.add_scenario(scenario)
