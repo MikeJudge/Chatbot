@@ -1,0 +1,12 @@
+name: {{ scenario.get_name() }} <br>
+description: {{ scenario.get_description() }} <br>
+responses: <br> <br>
+{% for response in scenario.get_dialog().get_responses() %}
+   {{ response.get_response() }} <br>
+
+   {% for question in response.get_questions() %}
+   {{ question }} <br>
+   {% endfor %}
+   <br>
+
+{% endfor %}
