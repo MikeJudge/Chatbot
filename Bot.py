@@ -50,7 +50,7 @@ def log_probs(counts, total_count, smoothing):
 
 
 
-#input:  responses - set of Response_Node
+#input:  responses - list of Response_Node
 #        temp_map  - dict of Response_Node:int
 #output: dict of (start id, neighbor id) all mapped to 1
 
@@ -107,7 +107,7 @@ class Bot:
 
     #input: query         - string representing string from user
     #       prev_response - id of response previously made from bot
-    #ouput: list with ordered responses from greatest to lowest probability, (reply, prob, id)
+    #ouput: list with ordered responses from greatest to lowest probability, (reply, prob, id, points)
 
     def reply(self, prev_response, query):
         input_arr = tokenize(query) #preprocess input

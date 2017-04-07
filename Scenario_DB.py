@@ -1,6 +1,7 @@
 import pickle
 from Scenario import Scenario
 from pymongo import MongoClient
+from 
 
 class Scenario_DB:
 
@@ -8,19 +9,19 @@ class Scenario_DB:
 		pass
 
 
-	#output: list of (scenario_doc, Scenario)
-	#        scenario_doc is used for delete and update operation indexing
+	#output: list of (scenario_id, Scenario)
+	#        scenario_id is used for delete and update operation indexing
 
 	def get_scenarios(self):
 		#set up connection to database
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 		
-		#run through each scenario in database and append (scenario_doc, Scenario)
+		#run through each scenario in database and append (scenario_id, Scenario)
 		scenario_list = []
 		for scenario_doc in scenarios.find():
 			#pickle is used to construct Scenario from bson object
-			scenario_list.append((scenario_doc['_id'], pickle.loads(scenario_doc['data'])))
+			scenario_list.append((str(scenario_doc['_id']), pickle.loads(scenario_doc['data'])))
 
 		client.close()
 		return scenario_list
@@ -36,7 +37,7 @@ class Scenario_DB:
 		scenario_doc = {'data':pickle.dumps(scenario)} #convert Scenario object to bson object
 		scenarios.insert_one(scenario_doc)  #insert scenario_doc into database
 		client.close()
-		return scenario_doc['_id']
+		return str(scenario_doc['_id'])
 
 
 	#input: scenario_key - used to find Scenario being updated in database 
@@ -46,7 +47,7 @@ class Scenario_DB:
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
-		scenario_doc = scenarios.find_one({"_id": scenario_key})
+		scenario_doc = scenarios.find_one({"_id": ObjectId(scenario_key)})
 		scenario_doc['data'] = pickle.dumps(scenario) #update mapping with new Scenario object
 		scenarios.save(scenario_doc) #log change in database
 		client.close()
@@ -58,7 +59,7 @@ class Scenario_DB:
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
-		scenarios.delete_one({"_id": scenario_key}) #remove the entry from the database
+		scenarios.delete_one({"_id": ObjectId(scenario_key)}) #remove the entry from the database
 		client.close()
 
 
@@ -68,7 +69,7 @@ class Scenario_DB:
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
-		scenario = pickle.loads(scenarios.find_one({"_id": scenario_key})['data']) #get the entry from the database
+		scenario = pickle.loads(scenarios.find_one({"_id": ObjectId(scenario_key)})['data']) #get the entry from the database
 		client.close()
 		return scenario
 

@@ -1,11 +1,11 @@
 class Response_Node:
 
 	#input: response  - response String
-	#       questions - set of strings representing questions that trigger this response
-	#       neighbors - set of Response_Node. These are responses to questions that can follow this one
+	#       questions - list of strings representing questions that trigger this response
+	#       neighbors - list of Response_Node. These are responses to questions that can follow this one
 	#	    points    - number of points awarded when response is made
 
-	def __init__(self, response, questions, neighbors, points):
+	def __init__(self, response = '', questions = [], neighbors = [], points = 0):
 		self.response = response
 		self.questions = questions
 		self.neighbors = neighbors
@@ -25,35 +25,36 @@ class Response_Node:
 	def get_questions(self):
 		return self.questions
 
-	#input: new set of questions to trigger this response
+	#input: new list of questions to trigger this response
 	def set_questions(self, questions):
 		self.questions = questions
 
 	#input: question String
 	def add_question(self, question):
-		self.questions.add(question)	
+		self.questions.append(question)	
 
-	#input: String of question to be removed from questions
-	def remove_question(self, question):
-		self.questions.remove(question)
+	#input: index of question to be removed from questions
+	def remove_question(self, index):
+		del self.questions[index]
 
 
 	#output: this neighbors
 	def get_neighbors(self):
 		return self.neighbors
 
-	#input: set of neighbors to add to list
+	#input: list of neighbors
 	def set_neighbors(self, neighbors):
 		self.neighbors = neighbors
 
 	#input: Response_Node to be a new neighbor to this
 	def add_neighbor(self, neighbor):
-		self.neighbors.add(neighbor)
+		self.neighbors.append(neighbor)
 
 
-	#input: Response_Node neighbor to remove from this.neighbors
-	def remove_neighbor(self, neighbor):
-		self.neighbors.remove(neighbor)
+	#input: index of Response_Node neighbor to remove from this.neighbors
+	def remove_neighbor(self, index):
+		del self.neighbors[index]
+
 
 
 	#input: points int

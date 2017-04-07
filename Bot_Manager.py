@@ -3,6 +3,7 @@ import pickle
 from Scenario import Scenario
 from Bot import Bot
 from Scenario_DB import Scenario_DB
+from bson.objectid import ObjectId
 
 class Bot_Manager:
 
@@ -17,7 +18,7 @@ class Bot_Manager:
 	def load_bots(self):
 		db = Scenario_DB()
 		for scenario_key, scenario in db.get_scenarios():
-			self.bot_map[str(scenario_key)] = (Bot(scenario, 1e-8), scenario)
+			self.bot_map[scenario_key] = (Bot(scenario, 1e-8), scenario)
 
 
 	#input:  key for scenario

@@ -1,3 +1,5 @@
+from Dialog import Dialog
+
 class Scenario:
 
 	#input: name        - string of name of person in the scenario
@@ -5,7 +7,7 @@ class Scenario:
 	#       image       - image of the person
 	#       dialog      - Dialog object representing the dialog in the conversation
 
-	def __init__(self, name, description, image, dialog):
+	def __init__(self, name="", description="", image="", dialog = Dialog()):
 		self.name = name
 		self.description = description
 		self.image = image
