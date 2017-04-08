@@ -1,12 +1,28 @@
-name: {{ scenario.get_name() }} <br>
-description: {{ scenario.get_description() }} <br>
-responses: <br> <br>
-{% for response in scenario.get_dialog().get_responses() %}
-   {{ response.get_response() }} <br>
+<form method="POST">
+  name: <input type="text" name="scenario_name" value="{{ scenario.get_name() }}"> <br> <br>
+  Description: <input type="text" name="scenario_description" value="{{ scenario.get_description() }}"> <br> <br>
+  Total Points Possible: {{ scenario.get_dialog().get_total_points() }} <br> <br>
+  responses: <br> <br> <br>
 
-   {% for question in response.get_questions() %}
-   {{ question }} <br>
-   {% endfor %}
-   <br>
+  {% for response in scenario.get_dialog().get_responses() %}
+     response: <input type="text" name="response{{ loop.index0 }}" value="{{ response.get_response() }}" size = "50"> 
+     points: <input type="text" name="response_points{{ loop.index0 }}" value="{{ response.get_points() }}" size = "5">
+     <a href= '/admin/scenario/remove_response/{{ scenario_id }}/{{ loop.index0 }}'>Delete Response</a> <br><br>
 
-{% endfor %}
+     {% set outer_loop = loop %}
+     Questions: <br>
+     {% for question in response.get_questions() %}
+        question: <input type="text" name="question{{ outer_loop.index0 }}_{{ loop.index0 }}" value="{{ question }}" size = "50"> 
+        <a href= '/admin/scenario/remove_question/{{ scenario_id }}/{{ outer_loop.index0 }}/{{ loop.index0 }} '>Delete Question</a> <br><br>
+     {% endfor %}
+     <a href= '/admin/scenario/add_question/{{ scenario_id }}/{{ loop.index0 }}'>Add Question</a> <br> <br>
+     <br> <br>
+  {% endfor %}
+
+  <a href= '/admin/scenario/add_response/{{ scenario_id }}'>Add Response</a> <br> <br> <br> <br>
+  <input type="submit" value="save">
+</form>
+
+
+<a href= '/admin/scenario/remove_scenario/{{ scenario_id }}'>Delete</a> <br>
+<a href= '/admin'>Home</a>

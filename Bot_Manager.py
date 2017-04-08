@@ -1,9 +1,5 @@
-from pymongo import MongoClient
-import pickle
-from Scenario import Scenario
 from Bot import Bot
 from Scenario_DB import Scenario_DB
-from bson.objectid import ObjectId
 
 class Bot_Manager:
 
@@ -28,24 +24,4 @@ class Bot_Manager:
 		if key not in self.bot_map:
 			return None
 		return self.bot_map[key]
-
-
-'''
-test = Bot_Manager()
-b = test.get_bot("mike Judge")
-s = ''
-prev_response = -1 #initial id
-points = 0
-while True:
-    s = raw_input("User: ")
-    if s == 'exit':
-    	break
-    y =  b.reply(prev_response, s)
-    for x in y:
-    	print x
-    print ""
-    prev_response = y[0][2]
-    points += y[0][3]
-
-print 'points: ' + str(points) + "out of: " + str(b.get_total_points())'''
 

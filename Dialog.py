@@ -37,5 +37,17 @@ class Dialog:
 		del self.responses[index]
 		self.set_total_points() #update total points
 
+	#input:  index of response
+	#output: response_node located at index, or None if out of bounds
+	def get_response(self, index):
+		if index < 0 or index >= len(self.responses):
+			return None
+		return self.responses[index]
+
+	#input: index of response
+	#       Response_Node object to save to index
+	def set_response(self, index, response):
+		self.responses[index] = response
+		self.set_total_points()
 
 		

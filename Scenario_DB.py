@@ -1,7 +1,7 @@
 import pickle
 from Scenario import Scenario
 from pymongo import MongoClient
-from 
+from bson.objectid import ObjectId
 
 class Scenario_DB:
 
@@ -10,7 +10,7 @@ class Scenario_DB:
 
 
 	#output: list of (scenario_id, Scenario)
-	#        scenario_id is used for delete and update operation indexing
+	#        scenario_id is used for indexing scenario in db
 
 	def get_scenarios(self):
 		#set up connection to database
@@ -28,46 +28,58 @@ class Scenario_DB:
 
 
 	#input:  Scenario object
-	#output: scenario_id linked to this Scenario object (use in update_scenario and delete_scenario functions)
+	#output: scenario_id linked to this Scenario object (use this id to index into db)
 
 	def add_scenario(self, scenario):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
 		scenario_doc = {'data':pickle.dumps(scenario)} #convert Scenario object to bson object
-		scenarios.insert_one(scenario_doc)  #insert scenario_doc into database
+		scenarios.insert_one(scenario_doc)  #insert scenario_doc into database, (id field will be added to scenario_doc)
 		client.close()
 		return str(scenario_doc['_id'])
 
 
-	#input: scenario_key - used to find Scenario being updated in database 
-	#       scenario     - Scenario object to store in db
+	#input:  scenario_key - used to find Scenario being updated in database 
+	#        scenario     - Scenario object to store in db
+	#output: True on success, False on failure
 
 	def update_scenario(self, scenario_key, scenario):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
 		scenario_doc = scenarios.find_one({"_id": ObjectId(scenario_key)})
+		if scenario_doc == None:
+			return False
 		scenario_doc['data'] = pickle.dumps(scenario) #update mapping with new Scenario object
 		scenarios.save(scenario_doc) #log change in database
 		client.close()
+		return True
 
 
-	#input: scenario_key - key of scenario to be deleted from database
+	#input:  scenario_key - key of scenario to be deleted from database
+	#output: True on success, False on failure
 
 	def delete_scenario(self, scenario_key):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
+		if scenarios.find_one({"_id": ObjectId(scenario_key)}) == None:
+			return False
 
 		scenarios.delete_one({"_id": ObjectId(scenario_key)}) #remove the entry from the database
 		client.close()
+		return True
 
 
-	#input: scenario_key - key of scenario to be returned from database
-
+	#input:  scenario_key - key of scenario to be returned from database
+	#output: scenario linked to the key, or None if not found
+	
 	def get_scenario(self, scenario_key):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
+
+		if scenarios.find_one({"_id": ObjectId(scenario_key)}) == None:
+			return None
 
 		scenario = pickle.loads(scenarios.find_one({"_id": ObjectId(scenario_key)})['data']) #get the entry from the database
 		client.close()

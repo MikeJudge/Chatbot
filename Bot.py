@@ -10,7 +10,7 @@ from Response_Node import Response_Node
 
 def tokenize(line):
 	result = line.lower().split()
-	for i in xrange(len(result)): #remove punctuation marks
+	for i in xrange(len(result)): #remove punctuation marks at end of sentence
 		if not result[i][-1].isalnum():
 			result[i] = result[i][:-1]
 	return result
@@ -86,10 +86,10 @@ class Bot:
 
     def __init__(self, scenario, smoothing):
         print 'initializing'
-        self.kb = [] #kb of (response, log_probs dict, response_id) tuples
+        self.kb = [] #kb of (response, log_probs dict, response_id, points) tuples
 
         dialog = scenario.get_dialog()
-        temp_map = {}  # used to help create the transition probs
+        temp_map = {}  # used to help create the transition probs dictionary
         count = 0      # used for giving ids to responses
 
         #initialize knowledge base with dialog from scenario
@@ -105,8 +105,9 @@ class Bot:
 
         
 
-    #input: query         - string representing string from user
-    #       prev_response - id of response previously made from bot
+ 
+    #input: prev_response - id of response previously made from bot
+    #       query         - string representing string from user
     #ouput: list with ordered responses from greatest to lowest probability, (reply, prob, id, points)
 
     def reply(self, prev_response, query):
