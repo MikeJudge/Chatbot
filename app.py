@@ -259,7 +259,6 @@ def chat(scenario_id):
     results = session['results']
 
     temp = bot.reply(prev_response_id, s)[:3]
-    print temp
     reply, prob_score, response_id, points = temp[0]
 
     #this check is needed to give user points only the first time it hits this response
