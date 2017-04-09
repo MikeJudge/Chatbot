@@ -1,28 +1,26 @@
+<form method="POST" action="/admin">
+    <button type="submit">Home</button>
+</form>
+
 <form method="POST">
   name: <input type="text" name="scenario_name" value="{{ scenario.get_name() }}"> <br> <br>
   Description: <input type="text" name="scenario_description" value="{{ scenario.get_description() }}"> <br> <br>
   Total Points Possible: {{ scenario.get_dialog().get_total_points() }} <br> <br>
-  responses: <br> <br> <br>
+  responses: <br> <br>
 
-  {% for response in scenario.get_dialog().get_responses() %}
-     response: <input type="text" name="response{{ loop.index0 }}" value="{{ response.get_response() }}" size = "50"> 
-     points: <input type="text" name="response_points{{ loop.index0 }}" value="{{ response.get_points() }}" size = "5">
-     <a href= '/admin/scenario/remove_response/{{ scenario_id }}/{{ loop.index0 }}'>Delete Response</a> <br><br>
+  <select onChange="window.location.href=this.value">
+      <option value="/admin/scenario/{{ scenario_id }}"> Select a Response</option>
+      {% for response in scenario.get_dialog().get_responses() %}
+        <option value="/admin/scenario/response_view/{{ scenario_id }}/{{ loop.index0 }}">{{ response.get_response() }}</option>
+      {% endfor %}
+  </select>
+          
 
-     {% set outer_loop = loop %}
-     Questions: <br>
-     {% for question in response.get_questions() %}
-        question: <input type="text" name="question{{ outer_loop.index0 }}_{{ loop.index0 }}" value="{{ question }}" size = "50"> 
-        <a href= '/admin/scenario/remove_question/{{ scenario_id }}/{{ outer_loop.index0 }}/{{ loop.index0 }} '>Delete Question</a> <br><br>
-     {% endfor %}
-     <a href= '/admin/scenario/add_question/{{ scenario_id }}/{{ loop.index0 }}'>Add Question</a> <br> <br>
-     <br> <br>
-  {% endfor %}
-
-  <a href= '/admin/scenario/add_response/{{ scenario_id }}'>Add Response</a> <br> <br> <br> <br>
-  <input type="submit" value="save">
+  <a href= '/admin/scenario/add_response/{{ scenario_id }}'>Add Response</a> <br> <br>
+  <input type="submit" value="Save">
 </form>
 
 
-<a href= '/admin/scenario/remove_scenario/{{ scenario_id }}'>Delete</a> <br>
-<a href= '/admin'>Home</a>
+<form method="POST" action="/admin/scenario/remove_scenario/{{ scenario_id }}">
+    <button type="submit">Delete</button>
+</form>

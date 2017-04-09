@@ -1,0 +1,37 @@
+<a href= '/admin/scenario/{{ scenario_id }}'>Go Back</a> <br> <br>
+
+<form method="POST">
+
+    Response: <input type="text" name="response_text" value="{{ response.get_response() }}" size = "50"> 
+    Points: <input type="text" name="response_points" value="{{ response.get_points() }}" size = "5"> <br><br>
+    Questions: <br>
+
+    {% for question in response.get_questions() %}
+        question: <input type="text" name="question{{ loop.index0 }}" value="{{ question }}" size = "50"> 
+        <a href= '/admin/scenario/remove_question/{{ scenario_id }}/{{ response_index }}/{{ loop.index0 }} '>Delete Question</a> <br>
+    {% endfor %}
+    <a href= '/admin/scenario/add_question/{{ scenario_id }}/{{ response_index }}'>Add Question</a> <br> <br>
+
+    Neighbors: <br>
+    {% for response_neighbor in response.get_neighbors() %}
+        Neighbor: {{ response_neighbor.get_response() }} <a href= '/admin/scenario/remove_neighbor/{{ scenario_id }}/{{ response_index }}/{{ loop.index0 }}'>Delete Neighbor</a> <br> 
+    {% endfor %}
+
+
+    Add a Neighbor:
+    <select onChange="window.location.href=this.value">
+        <option value="/admin/scenario/response_view/{{ scenario_id }}/{{ response_index }}"> Select a Neighbor</option>
+        {% for response in scenario.get_dialog().get_responses() %}
+            <option value="/admin/scenario/add_neighbor/{{ scenario_id }}/{{ response_index }}/{{ loop.index0 }}">{{ response.get_response() }}</option>
+        {% endfor %}
+    </select>
+          
+     <br> <br>
+
+    <input type="submit" value="Save">
+</form>
+
+
+<form method="POST" action="/admin/scenario/remove_response/{{ scenario_id }}/{{ response_index }}">
+    <button type="submit">Delete</button>
+</form>

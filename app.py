@@ -13,7 +13,7 @@ manager = Bot_Manager() #global
 db = Scenario_DB()      #global
 
 
-def check_input(admin = None, scenario_id = None, response_index = None, question_index = None):
+def check_input(admin = None, scenario_id = None, response_index = None, question_index = None, neighbor_index = None):
     if not admin:
         return "Not logged in"
 
@@ -29,11 +29,11 @@ def check_input(admin = None, scenario_id = None, response_index = None, questio
     if response == None:
         return "response not found"
 
-    if question_index == None:
-        return ''
-    question = response.get_question(int(question_index))
-    if question == None:
+    if question_index != None and response.get_question(int(question_index)) == None:
         return 'question not found'
+
+    if neighbor_index != None and response.get_neighbor(int(neighbor_index)) == None:
+        return 'neighbor not found'
 
     return ''
 
@@ -49,7 +49,7 @@ def do_admin_login():
     return admin() 
 
 
-@app.route("/logout")
+@app.route("/logout", methods=['POST'])
 def logout():
     #logout user and show them the home page
     session['logged_in'] = False
@@ -57,7 +57,7 @@ def logout():
 
 
 
-@app.route("/admin")
+@app.route("/admin", methods=['POST', 'GET'])
 def admin(): 
    #if not logged in, show user the login screen
    if not session.get('logged_in'):
@@ -76,23 +76,41 @@ def view_scenario(scenario_id):
 
     scenario = db.get_scenario(scenario_id)
     if request.method == 'POST': #updating a scenario
+        print 'saving scenario'
         scenario.set_name(request.form['scenario_name'])
         scenario.set_description(request.form['scenario_description'])
-
-        dialog = scenario.get_dialog()
-        for i in xrange(len(dialog.get_responses())):
-            response = dialog.get_response(i)
-            response.set_response(request.form.get('response' + str(i)))
-            response.set_points(int(request.form.get('response_points' + str(i))))
-
-            for n in xrange(len(response.get_questions())):
-                response.set_question(n, request.form.get('question' + str(i) + '_' + str(n)))
-
-        dialog.set_total_points() #update points for the dialog
         db.update_scenario(scenario_id, scenario) #update scenario in db
 
     #display scenario
     return render_template('scenario_view.html', scenario = scenario, scenario_id = scenario_id)
+
+
+@app.route("/admin/scenario/response_view/<scenario_id>/<response_index>", methods=['POST', 'GET'])
+def view_response(scenario_id, response_index):
+    c = check_input(session.get('logged_in'), scenario_id, response_index)
+    if c != '':
+        return c
+
+    scenario = db.get_scenario(scenario_id)
+    response = scenario.get_dialog().get_response(int(response_index))
+
+    if request.method == 'POST':
+        print 'saving response'
+        response.set_response(request.form.get('response_text'))
+        response.set_points(int(request.form.get('response_points')))
+
+        for n in xrange(len(response.get_questions())):
+            response.set_question(n, request.form.get('question' + str(n)))
+
+        scenario.get_dialog().set_total_points()  #update points for the dialog
+        db.update_scenario(scenario_id, scenario)  #update scenario in db
+
+
+    return render_template('response_view.html', 
+                            response = response,
+                            scenario = scenario, 
+                            scenario_id = scenario_id, 
+                            response_index = response_index)
 
 
 
@@ -106,27 +124,18 @@ def add_response(scenario_id):
     scenario = db.get_scenario(scenario_id)
     scenario.get_dialog().add_response(Response_Node())
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/" + scenario_id)
+    response_index = scenario.get_dialog().get_length()-1
+    return redirect("/admin/scenario/response_view/" + scenario_id +"/" + str(response_index))
 
 
 
-@app.route("/admin/scenario/remove_response/<scenario_id>/<response_index>")
+@app.route("/admin/scenario/remove_response/<scenario_id>/<response_index>", methods = ['POST'])
 def remove_response(scenario_id, response_index):
     c = check_input(session.get('logged_in'), scenario_id, response_index)
     if c != '':
         return c
 
     scenario = db.get_scenario(scenario_id)
-    response = scenario.get_dialog().get_response(int(response_index))
-
-    #since we are deleting a response, all responses pointing to this response need to be updates
-    for curr_response in scenario.get_dialog().get_responses():
-        for i in xrange(len(curr_response.get_neighbors())):
-            if curr_response.get_neighbor(i) == response:
-                curr_response.remove_neighbor(i)
-                break
-
-
     scenario.get_dialog().remove_response(int(response_index))
     db.update_scenario(scenario_id, scenario)
     return redirect("/admin/scenario/" + scenario_id)
@@ -142,7 +151,7 @@ def add_question(scenario_id, response_index):
     scenario = db.get_scenario(scenario_id)
     scenario.get_dialog().get_response(int(response_index)).add_question('')
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/" + scenario_id)
+    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
 
 
 
@@ -157,21 +166,21 @@ def remove_question(scenario_id, response_index, question_index):
     response = scenario.get_dialog().get_response(int(response_index))
     response.remove_question(int(question_index))
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/" + scenario_id)
+    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
 
 
-@app.route("/admin/scenario/new")
+@app.route("/admin/scenario/new", methods = ['POST'])
 def create_scenario():
     c = check_input(session.get('logged_in'))
     if c != '':
         return c
 
     scen = Scenario()
-    key = db.add_scenario(scen)
-    return redirect('/admin/scenario/' + key)
+    scenario_id = db.add_scenario(scen)
+    return redirect('/admin/scenario/' + scenario_id)
 
 
-@app.route("/admin/scenario/remove_scenario/<scenario_id>")
+@app.route("/admin/scenario/remove_scenario/<scenario_id>", methods = ['POST'])
 def remove_scenario(scenario_id):
     c = check_input(session.get('logged_in'), scenario_id)
     if c != '':
@@ -180,6 +189,49 @@ def remove_scenario(scenario_id):
     db.delete_scenario(scenario_id)
     return redirect('/admin')
 
+
+@app.route('/admin/scenario/add_neighbor/<scenario_id>/<response_index>/<neighbor_index>')
+def add_neighbor(scenario_id, response_index, neighbor_index):
+    c = check_input(session.get('logged_in'), scenario_id, response_index)
+    if c != '':
+        return c
+    c = check_input(session.get('logged_in'), scenario_id, neighbor_index)
+    if c != '':
+        return c
+
+
+    scenario = db.get_scenario(scenario_id)
+    response = scenario.get_dialog().get_response(int(response_index))
+    neighbor = scenario.get_dialog().get_response(int(neighbor_index))
+    response.add_neighbor(neighbor)
+    db.update_scenario(scenario_id, scenario)
+    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
+
+
+
+@app.route('/admin/scenario/remove_neighbor/<scenario_id>/<response_index>/<neighbor_index>')
+def remove_neighbor(scenario_id, response_index, neighbor_index):
+    c = check_input(session.get('logged_in'), scenario_id, response_index, None, neighbor_index)
+    if c != '':
+        return c
+
+
+    scenario = db.get_scenario(scenario_id)
+    response = scenario.get_dialog().get_response(int(response_index))
+
+    response.remove_neighbor(int(neighbor_index))
+    db.update_scenario(scenario_id, scenario)
+    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
+
+
+@app.route("/admin/reload_bots", methods=['POST'])
+def reload_bots():
+    c = check_input(session.get('logged_in'))
+    if c != '':
+        return c
+    manager.load_bots()
+
+    return redirect("/admin")
 
 
 @app.route("/chat/<scenario_id>", methods=['POST', 'GET'])

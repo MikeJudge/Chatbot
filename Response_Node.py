@@ -60,16 +60,19 @@ class Response_Node:
 
 	#input: Response_Node to be a new neighbor to this
 	def add_neighbor(self, neighbor):
-		self.neighbors.append(neighbor)
+		if neighbor not in self.neighbors and neighbor != self:
+			self.neighbors.append(neighbor)
 
 	#input: index of Response_Node neighbor to remove from this.neighbors
 	def remove_neighbor(self, index):
 		del self.neighbors[index]
 
 	#input:  index of neighbor to return
-	#output: response_node response
+	#output: response_node at index, or None if out of bounds
 	def get_neighbor(self, index):
-		return self.neighbors(index)
+		if index < 0 or index >= len(self.neighbors):
+			return None
+		return self.neighbors[index]
 
 	#input: index - int index of neighbor to change
 	#       neighbor - response_node

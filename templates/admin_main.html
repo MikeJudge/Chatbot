@@ -3,7 +3,7 @@
      {% for scenario in scenario_list %}
         <li>
            <div class="text">
-              {{ scenario[1].get_name() }} <a href= '/admin/scenario/{{ scenario[0] }}'>Edit</a>
+              {{ scenario[1].get_name() }}: <a href= '/admin/scenario/{{ scenario[0] }}'> View </a>
            </div>
         </li>
      {% endfor %}
@@ -11,4 +11,15 @@
 
 {% endif %}
 
-<a href= '/admin/scenario/new'>Create New</a>
+
+<form method="POST" action="/admin/scenario/new">
+    <button type="submit">New Scenario</button>
+</form>
+
+<form method="POST" action="/admin/reload_bots">
+    <button type="submit">Reload Bots</button>
+</form>
+
+<form method="POST" action="/logout">
+    <button type="submit">Logout</button>
+</form>

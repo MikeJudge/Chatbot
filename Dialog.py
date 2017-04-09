@@ -32,10 +32,21 @@ class Dialog:
 		self.responses.append(response)
 		self.set_total_points() #update total points
 
-	#input: index of Response_Node to remove from the reponse list
+
+	#input: index of Response_Node to remove from the response list
 	def remove_response(self, index):
-		del self.responses[index]
-		self.set_total_points() #update total points
+	    #since we are deleting a response, all responses pointing to this response need to be updated
+	    response = self.responses[index]
+	    for curr_response in self.responses:
+	    	print self.responses
+	    	for i in xrange(len(curr_response.get_neighbors())):
+	    		if curr_response.get_neighbor(i) == response:
+	    			curr_response.remove_neighbor(i)
+	    			break
+	    print self.responses
+	    del self.responses[index]
+	    self.set_total_points() #update total points
+
 
 	#input:  index of response
 	#output: response_node located at index, or None if out of bounds
@@ -50,4 +61,6 @@ class Dialog:
 		self.responses[index] = response
 		self.set_total_points()
 
-		
+	#output: number of responses in dialog
+	def get_length(self):
+		return len(self.responses)
