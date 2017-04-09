@@ -1,0 +1,27 @@
+<style>
+table, th, td {
+    border: 2px solid black;
+}
+</style>
+
+<table>
+  <tr>
+    <th>You Said</th>
+    <th>Top 3 matches</th>
+    <th>Points Awarded</th>
+  </tr>
+  
+  
+    {% for result in results %}
+        <tr>
+          <td> {{ result[0] }} </td>
+          <td> {% for reply in result[1] %}
+                {{ reply }} <br>
+               {% endfor %}
+          </td>
+          <td> {{ result[2] }} </td>
+        </tr>
+    {% endfor %}
+  
+
+</table>

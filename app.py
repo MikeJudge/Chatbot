@@ -244,35 +244,56 @@ def chat(scenario_id):
 
     if request.method == 'GET': #first time visiting page, initialize user data
         session['dialog'] = []
-        session['prev_response'] = -1
+        session['prev_response_id'] = -1
         session['score'] = 0
         session['prev_response_ids'] = []
+        session['results'] = []
         return render_template('chat.html', scenario = scenario)
 
     #Post part
     s = request.form['input_text'] #get input from user
     dialog = session['dialog']
-    prev_response = session['prev_response']
+    prev_response_id = session['prev_response_id']
     curr_score = session['score']
     prev_response_ids = session['prev_response_ids']
+    results = session['results']
 
-    reply, prob_score, response_id, points = bot.reply(prev_response, s)[0]
+    temp = bot.reply(prev_response_id, s)[:3]
+    print temp
+    reply, prob_score, response_id, points = temp[0]
 
     #this check is needed to give user points only the first time it hits this response
     if response_id not in prev_response_ids: 
         curr_score += points
         prev_response_ids.append(response_id)
+    else:
+        points = 0
+
     dialog.append((s, reply))
+    new_result = (s, [x[0] for x in temp], points)
+    results.append(new_result)
+
 
     #update session data
     session['dialog'] = dialog
-    session['prev_response'] = response_id
+    session['prev_response_id'] = response_id
     session['score'] = curr_score
     session['prev_response_ids'] = prev_response_ids
+    session['results'] = results
 
     #send data to render_template in order to display it to the user
-    return render_template('chat.html', dialog = dialog, score = curr_score, scenario = scenario)
+    return render_template('chat.html', dialog = dialog, score = curr_score, scenario = scenario, scenario_id = scenario_id)
    
+
+@app.route("/chat/<scenario_id>/results", methods = ['POST'])
+def chat_results(scenario_id):
+    c = check_input(True, scenario_id)
+    if c != '':
+        return c
+    scenario = db.get_scenario(scenario_id)
+    return render_template('result_view.html', results = session['results'], scenario = scenario)
+
+
 
 
 app.secret_key = 'secret key'
