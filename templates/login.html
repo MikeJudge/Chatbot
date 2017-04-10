@@ -5,7 +5,7 @@
 {% else %}
  
  
-<form action="/login" method="POST">
+<form action={{ url_for('do_admin_login') }} method="POST">
 	<div class="login">
 		<div class="login-screen">
 			<div class="app-title">

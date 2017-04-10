@@ -1,4 +1,4 @@
-<form method="POST" action="/admin">
+<form method="POST" action={{ url_for('admin') }}>
     <button type="submit">Home</button>
 </form>
 
@@ -9,18 +9,18 @@
   responses: <br> <br>
 
   <select onChange="window.location.href=this.value">
-      <option value="/admin/scenario/{{ scenario_id }}"> Select a Response</option>
+      <option value={{ url_for('view_scenario', scenario_id = scenario_id) }}> Select a Response</option>
       {% for response in scenario.get_dialog().get_responses() %}
-        <option value="/admin/scenario/response_view/{{ scenario_id }}/{{ loop.index0 }}">{{ response.get_response() }}</option>
+        <option value={{ url_for('view_response', scenario_id = scenario_id, response_index = loop.index0) }}>{{ response.get_response() }}</option>
       {% endfor %}
   </select>
           
 
-  <a href= '/admin/scenario/add_response/{{ scenario_id }}'>Add Response</a> <br> <br>
+  <a href= {{ url_for('add_response', scenario_id = scenario_id) }}>Add Response</a> <br> <br>
   <input type="submit" value="Save">
 </form>
 
 
-<form method="POST" action="/admin/scenario/remove_scenario/{{ scenario_id }}">
+<form method="POST" action={{ url_for('remove_scenario', scenario_id = scenario_id) }}>
     <button type="submit">Delete</button>
 </form>

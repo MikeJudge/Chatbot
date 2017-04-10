@@ -3,17 +3,19 @@ import os
 from Scenario import Scenario
 from Dialog import Dialog
 from Response_Node import Response_Node
+import nltk
+from nltk.stem.lancaster import LancasterStemmer
 
 
 #input:  line - String
 #output: list of token strings
 
 def tokenize(line):
-	result = line.lower().split()
-	for i in xrange(len(result)): #remove punctuation marks at end of sentence
-		if not result[i][-1].isalnum():
-			result[i] = result[i][:-1]
-	return result
+    stemmer = LancasterStemmer()
+    result = line.lower().split()
+    for i in xrange(len(result)): #remove punctuation marks at end of sentence
+        result[i] = stemmer.stem(result[i])
+    return result
 
 
 #input:  questions  - list of strings

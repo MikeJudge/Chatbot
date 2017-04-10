@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session, request, flash, abort, redirect, g, redirect
+from flask import Flask, render_template, session, request, flash, abort, redirect, g, url_for
 import os
 from Scenario import Scenario
 from Dialog import Dialog
@@ -6,6 +6,7 @@ from Response_Node import Response_Node
 from Bot import Bot
 from Bot_Manager import Bot_Manager
 from Scenario_DB import Scenario_DB
+from flask_weasyprint import HTML, render_pdf
 
 app = Flask(__name__)
 
@@ -76,7 +77,6 @@ def view_scenario(scenario_id):
 
     scenario = db.get_scenario(scenario_id)
     if request.method == 'POST': #updating a scenario
-        print 'saving scenario'
         scenario.set_name(request.form['scenario_name'])
         scenario.set_description(request.form['scenario_description'])
         db.update_scenario(scenario_id, scenario) #update scenario in db
@@ -95,7 +95,6 @@ def view_response(scenario_id, response_index):
     response = scenario.get_dialog().get_response(int(response_index))
 
     if request.method == 'POST':
-        print 'saving response'
         response.set_response(request.form.get('response_text'))
         response.set_points(int(request.form.get('response_points')))
 
@@ -125,7 +124,7 @@ def add_response(scenario_id):
     scenario.get_dialog().add_response(Response_Node())
     db.update_scenario(scenario_id, scenario)
     response_index = scenario.get_dialog().get_length()-1
-    return redirect("/admin/scenario/response_view/" + scenario_id +"/" + str(response_index))
+    return redirect(url_for('view_response', scenario_id = scenario_id, response_index = str(response_index)))
 
 
 
@@ -138,7 +137,7 @@ def remove_response(scenario_id, response_index):
     scenario = db.get_scenario(scenario_id)
     scenario.get_dialog().remove_response(int(response_index))
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/" + scenario_id)
+    return redirect(url_for('view_scenario', scenario_id = scenario_id))
 
 
 
@@ -151,7 +150,7 @@ def add_question(scenario_id, response_index):
     scenario = db.get_scenario(scenario_id)
     scenario.get_dialog().get_response(int(response_index)).add_question('')
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
+    return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
 
 
 
@@ -166,7 +165,7 @@ def remove_question(scenario_id, response_index, question_index):
     response = scenario.get_dialog().get_response(int(response_index))
     response.remove_question(int(question_index))
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
+    return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
 
 
 @app.route("/admin/scenario/new", methods = ['POST'])
@@ -177,7 +176,7 @@ def create_scenario():
 
     scen = Scenario()
     scenario_id = db.add_scenario(scen)
-    return redirect('/admin/scenario/' + scenario_id)
+    return redirect(url_for('view_scenario', scenario_id = scenario_id))
 
 
 @app.route("/admin/scenario/remove_scenario/<scenario_id>", methods = ['POST'])
@@ -187,7 +186,7 @@ def remove_scenario(scenario_id):
         return c
 
     db.delete_scenario(scenario_id)
-    return redirect('/admin')
+    return redirect(url_for('admin'))
 
 
 @app.route('/admin/scenario/add_neighbor/<scenario_id>/<response_index>/<neighbor_index>')
@@ -205,7 +204,7 @@ def add_neighbor(scenario_id, response_index, neighbor_index):
     neighbor = scenario.get_dialog().get_response(int(neighbor_index))
     response.add_neighbor(neighbor)
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
+    return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
 
 
 
@@ -221,7 +220,7 @@ def remove_neighbor(scenario_id, response_index, neighbor_index):
 
     response.remove_neighbor(int(neighbor_index))
     db.update_scenario(scenario_id, scenario)
-    return redirect("/admin/scenario/response_view/" + scenario_id + "/" + response_index)
+    return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
 
 
 @app.route("/admin/reload_bots", methods=['POST'])
@@ -231,7 +230,7 @@ def reload_bots():
         return c
     manager.load_bots()
 
-    return redirect("/admin")
+    return redirect(url_for('admin'))
 
 
 @app.route("/chat/<scenario_id>", methods=['POST', 'GET'])
@@ -284,14 +283,24 @@ def chat(scenario_id):
     return render_template('chat.html', dialog = dialog, score = curr_score, scenario = scenario, scenario_id = scenario_id)
    
 
-@app.route("/chat/<scenario_id>/results", methods = ['POST'])
+@app.route("/chat/results/<scenario_id>", methods = ['POST', 'GET'])
 def chat_results(scenario_id):
     c = check_input(True, scenario_id)
     if c != '':
         return c
     scenario = db.get_scenario(scenario_id)
-    return render_template('result_view.html', results = session['results'], scenario = scenario)
+    return render_template('result_view.html', results = session['results'], scenario = scenario, scenario_id = scenario_id)
 
+
+@app.route("/chat/results_pdf/<scenario_id>.pdf/", methods = ['POST'])
+def chat_results_pdf(scenario_id):
+    c = check_input(True, scenario_id)
+    if c != '':
+        return c
+
+    scenario = db.get_scenario(scenario_id)
+    html = render_template('result_pdf.html', results = session['results'], scenario = scenario, scenario_id = scenario_id)
+    return render_pdf(HTML(string=html))
 
 
 
