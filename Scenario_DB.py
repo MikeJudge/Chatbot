@@ -1,4 +1,3 @@
-import pickle
 from Scenario import Scenario
 from pymongo import MongoClient
 from Dialog import Dialog
@@ -134,6 +133,7 @@ class Scenario_DB:
 		client.close()
 		return scenario
 
+
 	def clear_db(self):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
@@ -142,5 +142,26 @@ class Scenario_DB:
 			scenarios.delete_one(scenario_doc)
 
 		client.close()
+
+	def export_raw(self):
+		client = MongoClient('localhost', 27017)
+		scenarios = client.scenario_database.scenarios
+
+		result = list(scenarios.find())
+		client.close()
+		return result
+
+	def import_raw(self, raw_docs):
+		client = MongoClient('localhost', 27017)
+		scenarios = client.scenario_database.scenarios
+
+		for doc in raw_docs:
+			if scenarios.find_one({"_id": doc['_id']}) == None:
+				scenarios.insert_one(doc)
+			else:
+				scenarios.save(doc)
+
+		client.close()
+
 
 

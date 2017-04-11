@@ -20,6 +20,13 @@
   <input type="submit" value="Save">
 </form>
 
+<select onChange="window.location.href=this.value">
+      <option value={{ url_for('view_scenario', scenario_id = scenario_id, scenario_list = scenario_list) }}>Import Scenario</option>
+      {% for scenario_entry in scenario_list %}
+        <option value={{ url_for('import_scenario', scenario_id = scenario_id, scenario_old_id = scenario_entry[0]) }}>{{ scenario_entry[1].get_name() }}</option>
+      {% endfor %}
+</select>
+
 
 <form method="POST" action={{ url_for('remove_scenario', scenario_id = scenario_id) }}>
     <button type="submit">Delete</button>

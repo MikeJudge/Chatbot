@@ -7,6 +7,8 @@ from Bot import Bot
 from Bot_Manager import Bot_Manager
 from Scenario_DB import Scenario_DB
 from flask_weasyprint import HTML, render_pdf
+import pickle
+from werkzeug import secure_filename
 
 app = Flask(__name__)
 
@@ -82,7 +84,8 @@ def view_scenario(scenario_id):
         db.update_scenario(scenario_id, scenario) #update scenario in db
 
     #display scenario
-    return render_template('scenario_view.html', scenario = scenario, scenario_id = scenario_id)
+    return render_template('scenario_view.html', scenario = scenario,
+                            scenario_id = scenario_id, scenario_list = db.get_scenarios())
 
 
 @app.route("/admin/scenario/response_view/<scenario_id>/<response_index>", methods=['POST', 'GET'])
@@ -96,7 +99,8 @@ def view_response(scenario_id, response_index):
 
     if request.method == 'POST':
         response.set_response(request.form.get('response_text'))
-        response.set_points(int(request.form.get('response_points')))
+        if request.form.get('response_points').isdigit():
+            response.set_points(int(request.form.get('response_points')))
 
         for n in xrange(len(response.get_questions())):
             response.set_question(n, request.form.get('question' + str(n)))
@@ -179,6 +183,22 @@ def create_scenario():
     return redirect(url_for('view_scenario', scenario_id = scenario_id))
 
 
+
+@app.route("/admin/scenario/import/<scenario_id>/<scenario_old_id>")
+def import_scenario(scenario_id, scenario_old_id):
+    c = check_input(session.get('logged_in'), scenario_id)
+    if c != '':
+        return c
+
+    c = check_input(session.get('logged_in'), scenario_old_id)
+    if c != '':
+        return c
+
+    scenario = db.get_scenario(scenario_old_id)
+    db.update_scenario(scenario_id, scenario)
+    return redirect(url_for('view_scenario', scenario_id = scenario_id))
+
+
 @app.route("/admin/scenario/remove_scenario/<scenario_id>", methods = ['POST'])
 def remove_scenario(scenario_id):
     c = check_input(session.get('logged_in'), scenario_id)
@@ -231,6 +251,26 @@ def reload_bots():
     manager.load_bots()
 
     return redirect(url_for('admin'))
+
+@app.route("/admin/export_db", methods=['POST'])
+def export_db():
+    c = check_input(session.get('logged_in'))
+    if c != '':
+        return c
+
+    pickle.dump(db.export_raw(), open("./static/database.db", "wb"))
+    return app.send_static_file('database.db')
+
+
+@app.route('/admin/import_db', methods = ['POST'])
+def import_db():
+    if request.method == 'POST':
+        f = request.files['file']
+        f.save("./uploads/" + secure_filename(f.filename))
+        data = pickle.load(open("./uploads/" + secure_filename(f.filename), "rb"))
+        db.import_raw(data)
+        os.remove("./uploads/" + secure_filename(f.filename))
+        return redirect(url_for('admin'))
 
 
 @app.route("/chat/<scenario_id>", methods=['POST', 'GET'])
@@ -289,7 +329,8 @@ def chat_results(scenario_id):
     if c != '':
         return c
     scenario = db.get_scenario(scenario_id)
-    return render_template('result_view.html', results = session['results'], scenario = scenario, scenario_id = scenario_id)
+    return render_template('result_view.html', score = session['score'], 
+                            results = session['results'], scenario = scenario, scenario_id = scenario_id)
 
 
 @app.route("/chat/results_pdf/<scenario_id>.pdf/", methods = ['POST'])
@@ -299,7 +340,8 @@ def chat_results_pdf(scenario_id):
         return c
 
     scenario = db.get_scenario(scenario_id)
-    html = render_template('result_pdf.html', results = session['results'], scenario = scenario, scenario_id = scenario_id)
+    html = render_template('result_pdf.html', score = session['score'],
+                            results = session['results'], scenario = scenario, scenario_id = scenario_id)
     return render_pdf(HTML(string=html))
 
 

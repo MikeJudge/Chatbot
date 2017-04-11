@@ -20,6 +20,16 @@
     <button type="submit">Reload Bots</button>
 </form>
 
+<form action = {{ url_for('import_db') }} method = "POST" 
+      enctype = "multipart/form-data">
+      <input type = "file" name = "file" />
+      <input type = "submit"/>
+</form>
+
+<form method="POST" action={{ url_for('export_db') }}>
+    <button type="submit">Export Database</button>
+</form>
+
 <form method="POST" action={{ url_for('logout') }}>
     <button type="submit">Logout</button>
 </form>

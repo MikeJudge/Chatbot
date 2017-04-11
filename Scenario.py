@@ -48,3 +48,4 @@ class Scenario:
 	def get_dialog(self):
 		return self.dialog
 
+

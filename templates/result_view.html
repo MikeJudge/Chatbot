@@ -29,6 +29,8 @@ Description: {{ scenario.get_description() }} <br> <br>
 
 </table>
 
+<br> Total Score: {{ score }} / {{ scenario.get_dialog().get_total_points() }} <br>
+
 <br> <br>
 <form method="POST" action={{ url_for('chat_results_pdf', scenario_id = scenario_id) }}>
     <button type="submit">Get Results as PDF</button>

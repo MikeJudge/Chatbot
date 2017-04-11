@@ -12,6 +12,7 @@ class Bot_Manager:
 	#and uses it to create Bots. Bots are stored in bot_map as scenario_key:(Bot,Scenario)
 
 	def load_bots(self):
+		self.bot_map.clear()
 		db = Scenario_DB()
 		for scenario_key, scenario in db.get_scenarios():
 			self.bot_map[scenario_key] = (Bot(scenario, 1e-8), scenario)
