@@ -1,9 +1,54 @@
 import pickle
 from Scenario import Scenario
 from pymongo import MongoClient
+from Dialog import Dialog
+from Response_Node import Response_Node
 from bson.objectid import ObjectId
 
+
+def scenario_to_doc(scenario, doc):
+	doc['name'] = scenario.get_name()
+	doc['description'] = scenario.get_description()
+	doc['image'] = scenario.get_image()
+
+
+	dialog = []
+	response_map = {}
+	for i in xrange(len(scenario.get_dialog().get_responses())):
+		response_map[scenario.get_dialog().get_response(i)] = i
+
+	for response in scenario.get_dialog().get_responses():
+		neighbors = []
+		for neighbor in response.get_neighbors():
+			neighbors.append(response_map[neighbor])
+
+		dialog.append((response.get_response(), response.get_questions(), neighbors, response.get_points()))
+
+	doc['dialog'] = dialog
+	return doc
+
+			
+
+def doc_to_scenario(doc):
+	dialog_data = doc['dialog']
+	dialog = []
+
+	for response_text, questions, neighbor_ids, points in dialog_data:
+		dialog.append(Response_Node(response_text, questions, neighbor_ids, points))
+
+	for response in dialog:
+		neighbors = []
+		neighbor_ids = response.get_neighbors()
+		for neighbor_id in neighbor_ids:
+			neighbors.append(dialog[neighbor_id])
+		response.set_neighbors(neighbors)
+
+	return Scenario(doc['name'], doc['description'], doc['image'], Dialog(dialog))
+
+
+
 class Scenario_DB:
+
 
 	def __init__(self):
 		pass
@@ -21,10 +66,12 @@ class Scenario_DB:
 		scenario_list = []
 		for scenario_doc in scenarios.find():
 			#pickle is used to construct Scenario from bson object
-			scenario_list.append((str(scenario_doc['_id']), pickle.loads(scenario_doc['data'])))
+			scenario_list.append((str(scenario_doc['_id']), doc_to_scenario(scenario_doc)))
 
 		client.close()
 		return scenario_list
+
+
 
 
 	#input:  Scenario object
@@ -34,7 +81,7 @@ class Scenario_DB:
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
-		scenario_doc = {'data':pickle.dumps(scenario)} #convert Scenario object to bson object
+		scenario_doc = scenario_to_doc(scenario, {}) #convert Scenario object to form that is mongoDB compatible
 		scenarios.insert_one(scenario_doc)  #insert scenario_doc into database, (id field will be added to scenario_doc)
 		client.close()
 		return str(scenario_doc['_id'])
@@ -51,7 +98,8 @@ class Scenario_DB:
 		scenario_doc = scenarios.find_one({"_id": ObjectId(scenario_key)})
 		if scenario_doc == None:
 			return False
-		scenario_doc['data'] = pickle.dumps(scenario) #update mapping with new Scenario object
+
+		scenario_to_doc(scenario, scenario_doc) #update mapping with new Scenario object
 		scenarios.save(scenario_doc) #log change in database
 		client.close()
 		return True
@@ -81,7 +129,18 @@ class Scenario_DB:
 		if scenarios.find_one({"_id": ObjectId(scenario_key)}) == None:
 			return None
 
-		scenario = pickle.loads(scenarios.find_one({"_id": ObjectId(scenario_key)})['data']) #get the entry from the database
+		scenario_doc = scenarios.find_one({"_id": ObjectId(scenario_key)})
+		scenario = doc_to_scenario(scenario_doc) #get the entry from the database
 		client.close()
 		return scenario
+
+	def clear_db(self):
+		client = MongoClient('localhost', 27017)
+		scenarios = client.scenario_database.scenarios
+
+		for scenario_doc in scenarios.find():
+			scenarios.delete_one(scenario_doc)
+
+		client.close()
+
 
