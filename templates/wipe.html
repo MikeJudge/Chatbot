@@ -1,0 +1,10 @@
+Warning: Clicking Wipe will wipe all the scenario data in the database
+This action is not reversible.
+
+<form method="POST" action={{ url_for('admin') }}>
+    <button type="submit">Go Back Home</button>
+</form>
+
+<form method="POST" action={{ url_for('do_wipe') }}>
+    <button type="submit">Wipe</button>
+</form>

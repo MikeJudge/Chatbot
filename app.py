@@ -264,6 +264,10 @@ def export_db():
 
 @app.route('/admin/import_db', methods = ['POST'])
 def import_db():
+    c = check_input(session.get('logged_in'))
+    if c != '':
+        return c
+
     if request.method == 'POST':
         f = request.files['file']
         f.save("./uploads/" + secure_filename(f.filename))
@@ -271,6 +275,26 @@ def import_db():
         db.import_raw(data)
         os.remove("./uploads/" + secure_filename(f.filename))
         return redirect(url_for('admin'))
+
+
+@app.route('/admin/wipe_db', methods = ['POST'])
+def wipe_db():
+    c = check_input(session.get('logged_in'))
+    if c != '':
+        return c
+    return render_template("wipe.html")
+
+
+@app.route('/admin/wipe_db/ok', methods = ['POST'])
+def do_wipe():
+    c = check_input(session.get('logged_in'))
+    if c != '':
+        return c
+
+    db.wipe_db()
+    return redirect(url_for('admin'))
+
+
 
 
 @app.route("/chat/<scenario_id>", methods=['POST', 'GET'])

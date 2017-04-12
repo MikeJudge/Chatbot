@@ -30,6 +30,10 @@
     <button type="submit">Export Database</button>
 </form>
 
+<form method="POST" action={{ url_for('wipe_db') }}>
+    <button type="submit">Wipe Database</button>
+</form>
+
 <form method="POST" action={{ url_for('logout') }}>
     <button type="submit">Logout</button>
 </form>

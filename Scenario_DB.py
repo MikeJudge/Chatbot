@@ -134,7 +134,7 @@ class Scenario_DB:
 		return scenario
 
 
-	def clear_db(self):
+	def wipe_db(self):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
