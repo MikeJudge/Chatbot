@@ -51,7 +51,11 @@ def doc_to_scenario(doc):
 			neighbors.append(dialog[neighbor_id]) #use indices to find neighbors
 		response.set_neighbors(neighbors) #store actual neighbors for this response
 
-	return Scenario(doc['name'], doc['description'], doc['image'], Dialog(dialog), doc['video_link'])
+	video_link = ''
+	if 'video_link' in doc:
+		video_link = doc['video_link']
+
+	return Scenario(doc['name'], doc['description'], doc['image'], Dialog(dialog), video_link)
 
 
 
