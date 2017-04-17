@@ -9,6 +9,7 @@ def scenario_to_doc(scenario, doc):
 	doc['name'] = scenario.get_name()
 	doc['description'] = scenario.get_description()
 	doc['image'] = scenario.get_image()
+	doc['video_link'] = scenario.get_video_link()
 
 
 	dialog = []
@@ -42,7 +43,7 @@ def doc_to_scenario(doc):
 			neighbors.append(dialog[neighbor_id])
 		response.set_neighbors(neighbors)
 
-	return Scenario(doc['name'], doc['description'], doc['image'], Dialog(dialog))
+	return Scenario(doc['name'], doc['description'], doc['image'], Dialog(dialog), doc['video_link'])
 
 
 

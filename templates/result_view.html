@@ -10,7 +10,8 @@ Description: {{ scenario.get_description() }} <br> <br>
 <table>
   <tr>
     <th>You Said</th>
-    <th>Top 3 matches</th>
+    <th>{{ scenario.get_name() }} Said</th>
+    <th>Ideal Question</th>
     <th>Points Awarded</th>
   </tr>
   
@@ -18,11 +19,9 @@ Description: {{ scenario.get_description() }} <br> <br>
     {% for result in results %}
         <tr>
           <td> {{ result[0] }} </td>
-          <td> {% for reply in result[1] %}
-                {{ loop.index }}) {{ reply }} <br><br>
-               {% endfor %}
-          </td>
+          <td> {{ result[1] }} </td>
           <td> {{ result[2] }} </td>
+          <td> {{ result[3] }} </td>
         </tr>
     {% endfor %}
   

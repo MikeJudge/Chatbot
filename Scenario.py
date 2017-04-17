@@ -7,11 +7,12 @@ class Scenario:
 	#       image       - image of the person
 	#       dialog      - Dialog object representing the dialog in the conversation
 
-	def __init__(self, name="", description="", image="", dialog = Dialog()):
+	def __init__(self, name="", description="", image="", dialog = Dialog(), video_link = ""):
 		self.name = name
 		self.description = description
 		self.image = image
 		self.dialog = dialog
+		self.video_link = video_link
 
 
 	#input: name - string name
@@ -47,5 +48,13 @@ class Scenario:
 	#output - Dialog object
 	def get_dialog(self):
 		return self.dialog
+
+	#input: video_link - youtube video link string
+	def set_video_link(self, video_link):
+		self.video_link = video_link
+
+	#output: video link string
+	def get_video_link(self):
+		return self.video_link
 
 

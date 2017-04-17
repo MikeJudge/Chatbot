@@ -7,7 +7,12 @@
     Questions: <br>
 
     {% for question in response.get_questions() %}
-        question: <input type="text" name="question{{ loop.index0 }}" value="{{ question }}" size = "50"> 
+        {% if loop.index0 == 0 %}
+           Model Question:
+        {% else %}
+           Alternate Question:
+        {% endif %}
+        <input type="text" name="question{{ loop.index0 }}" value="{{ question }}" size = "50"> 
         <a href= {{ url_for('remove_question', scenario_id = scenario_id, response_index = response_index, question_index = loop.index0) }}>Delete Question</a> <br>
     {% endfor %}
     <a href= {{ url_for('add_question', scenario_id = scenario_id, response_index = response_index) }}>Add Question</a> <br> <br>

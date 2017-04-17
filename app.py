@@ -8,12 +8,17 @@ from Bot_Manager import Bot_Manager
 from Scenario_DB import Scenario_DB
 from flask_weasyprint import HTML, render_pdf
 import pickle
+import base64
 from werkzeug import secure_filename
 
 app = Flask(__name__)
 
 manager = Bot_Manager() #global
 db = Scenario_DB()      #global
+
+#flask,  nltk, pymongo, weasyprint, flask_weasyprint, gunicorn
+#gunicorn app:app --preload
+
 
 
 def check_input(admin = None, scenario_id = None, response_index = None, question_index = None, neighbor_index = None):
@@ -81,11 +86,30 @@ def view_scenario(scenario_id):
     if request.method == 'POST': #updating a scenario
         scenario.set_name(request.form['scenario_name'])
         scenario.set_description(request.form['scenario_description'])
+        video_link = request.form['scenario_video_link']
+        if video_link.find('=') != -1:
+            video_link = 'https://www.youtube.com/embed/' + video_link[video_link.find('=')+1:]
+
+        scenario.set_video_link(video_link)
         db.update_scenario(scenario_id, scenario) #update scenario in db
 
     #display scenario
     return render_template('scenario_view.html', scenario = scenario,
                             scenario_id = scenario_id, scenario_list = db.get_scenarios())
+
+@app.route("/admin/scenario/<scenario_id>/upload_image", methods=['POST'])
+def upload_image(scenario_id):
+    c = check_input(session.get('logged_in'), scenario_id)
+    if c != '':
+        return c
+
+    scenario = db.get_scenario(scenario_id)
+    f = request.files['file']
+    image = base64.b64encode(f.read())
+    scenario.set_image(image)
+    db.update_scenario(scenario_id, scenario)
+
+    return redirect(url_for('view_scenario', scenario_id = scenario_id))
 
 
 @app.route("/admin/scenario/response_view/<scenario_id>/<response_index>", methods=['POST', 'GET'])
@@ -306,7 +330,6 @@ def chat(scenario_id):
     bot, scenario = manager.get_bot(scenario_id)
 
     if request.method == 'GET': #first time visiting page, initialize user data
-        session['dialog'] = []
         session['prev_response_id'] = -1
         session['score'] = 0
         session['prev_response_ids'] = []
@@ -315,14 +338,17 @@ def chat(scenario_id):
 
     #Post part
     s = request.form['input_text'] #get input from user
-    dialog = session['dialog']
     prev_response_id = session['prev_response_id']
     curr_score = session['score']
     prev_response_ids = session['prev_response_ids']
     results = session['results']
 
-    temp = bot.reply(prev_response_id, s)[:3]
-    reply, prob_score, response_id, points = temp[0]
+
+    reply, prob_score, response_id, points = bot.reply(prev_response_id, s)[0]
+    response_node = scenario.get_dialog().get_response(response_id)
+    top_question = response_node.get_question(0)
+    if top_question == None:
+        top_question = ''
 
     #this check is needed to give user points only the first time it hits this response
     if response_id not in prev_response_ids: 
@@ -331,20 +357,18 @@ def chat(scenario_id):
     else:
         points = 0
 
-    dialog.append((s, reply))
-    new_result = (s, [x[0] for x in temp], points)
+    new_result = (s, reply, top_question, points)
     results.append(new_result)
 
 
     #update session data
-    session['dialog'] = dialog
     session['prev_response_id'] = response_id
     session['score'] = curr_score
     session['prev_response_ids'] = prev_response_ids
     session['results'] = results
 
     #send data to render_template in order to display it to the user
-    return render_template('chat.html', dialog = dialog, score = curr_score, scenario = scenario, scenario_id = scenario_id)
+    return render_template('chat.html', score = curr_score, scenario = scenario, scenario_id = scenario_id, results = results)
    
 
 @app.route("/chat/results/<scenario_id>", methods = ['POST', 'GET'])

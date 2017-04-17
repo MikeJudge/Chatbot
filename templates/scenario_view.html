@@ -5,6 +5,8 @@
 <form method="POST">
   name: <input type="text" name="scenario_name" value="{{ scenario.get_name() }}"> <br> <br>
   Description: <input type="text" name="scenario_description" value="{{ scenario.get_description() }}"> <br> <br>
+  Image: <br> <img src="data:image/png;base64,{{ scenario.get_image() }}"/> <br> <br>
+  Youtube Video URL: <input type="text" name="scenario_video_link" value="{{ scenario.get_video_link() }}"> <br> <br>
   Total Points Possible: {{ scenario.get_dialog().get_total_points() }} <br> <br>
   responses: <br> <br>
 
@@ -18,6 +20,12 @@
 
   <a href= {{ url_for('add_response', scenario_id = scenario_id) }}>Add Response</a> <br> <br>
   <input type="submit" value="Save">
+</form>
+
+<form action = {{ url_for('upload_image', scenario_id = scenario_id) }} method = "POST" 
+      enctype = "multipart/form-data">
+      <input type = "file" name = "file" />
+      <button type="submit">Upload Image</button>
 </form>
 
 <select onChange="window.location.href=this.value">
