@@ -20,30 +20,35 @@ db = Scenario_DB()      #global
 #gunicorn app:app --preload
 
 
-
+#input:  each input refers to an item to make sure isn't malformed
+#output: error message string on error, '' on success
 def check_input(admin = None, scenario_id = None, response_index = None, question_index = None, neighbor_index = None):
     if not admin:
         return "Not logged in"
 
+    #make sure there is a scenario with this id
     if scenario_id == None:
         return ''
     scenario = db.get_scenario(scenario_id)
     if scenario == None:
         return "scenario not found"
 
+    #make sure the response_node exists
     if response_index == None:
         return ''
     response = scenario.get_dialog().get_response(int(response_index))
     if response == None:
         return "response not found"
 
+    #make sure the question exists
     if question_index != None and response.get_question(int(question_index)) == None:
         return 'question not found'
 
+    #make sure the neighbor to this response exists
     if neighbor_index != None and response.get_neighbor(int(neighbor_index)) == None:
         return 'neighbor not found'
 
-    return ''
+    return '' #valid input
 
 
 
@@ -73,7 +78,6 @@ def admin():
 
    scenario_list = db.get_scenarios()
    return render_template('admin_main.html', scenario_list = scenario_list)
-   #return "Hello Boss!  <a href='/logout'>Logout</a>" #todo: return html for admin page
 
 
 @app.route("/admin/scenario/<scenario_id>", methods=['POST', 'GET'])
@@ -87,7 +91,7 @@ def view_scenario(scenario_id):
         scenario.set_name(request.form['scenario_name'])
         scenario.set_description(request.form['scenario_description'])
         video_link = request.form['scenario_video_link']
-        if video_link.find('=') != -1:
+        if video_link.find('=') != -1: #make sure video link isn't malformed
             video_link = 'https://www.youtube.com/embed/' + video_link[video_link.find('=')+1:]
 
         scenario.set_video_link(video_link)
@@ -97,6 +101,8 @@ def view_scenario(scenario_id):
     return render_template('scenario_view.html', scenario = scenario,
                             scenario_id = scenario_id, scenario_list = db.get_scenarios())
 
+
+
 @app.route("/admin/scenario/<scenario_id>/upload_image", methods=['POST'])
 def upload_image(scenario_id):
     c = check_input(session.get('logged_in'), scenario_id)
@@ -105,11 +111,14 @@ def upload_image(scenario_id):
 
     scenario = db.get_scenario(scenario_id)
     f = request.files['file']
-    image = base64.b64encode(f.read())
+    image = base64.b64encode(f.read()) #convert image to 64 bit encoded string
     scenario.set_image(image)
     db.update_scenario(scenario_id, scenario)
 
+    #go back to scenario main page
     return redirect(url_for('view_scenario', scenario_id = scenario_id))
+
+
 
 
 @app.route("/admin/scenario/response_view/<scenario_id>/<response_index>", methods=['POST', 'GET'])
@@ -123,13 +132,14 @@ def view_response(scenario_id, response_index):
 
     if request.method == 'POST':
         response.set_response(request.form.get('response_text'))
-        if request.form.get('response_points').isdigit():
+        if request.form.get('response_points').isdigit(): #make sure they are entering integer
             response.set_points(int(request.form.get('response_points')))
 
         for n in xrange(len(response.get_questions())):
+            #use jinja parameterized ids to get questions
             response.set_question(n, request.form.get('question' + str(n)))
 
-        scenario.get_dialog().set_total_points()  #update points for the dialog
+        scenario.get_dialog().set_total_points()   #update points for the dialog
         db.update_scenario(scenario_id, scenario)  #update scenario in db
 
 
@@ -151,7 +161,8 @@ def add_response(scenario_id):
     scenario = db.get_scenario(scenario_id)
     scenario.get_dialog().add_response(Response_Node())
     db.update_scenario(scenario_id, scenario)
-    response_index = scenario.get_dialog().get_length()-1
+    response_index = scenario.get_dialog().get_length()-1 #response_index is last index in the dialog list
+    #redirect to new response page
     return redirect(url_for('view_response', scenario_id = scenario_id, response_index = str(response_index)))
 
 
@@ -165,6 +176,7 @@ def remove_response(scenario_id, response_index):
     scenario = db.get_scenario(scenario_id)
     scenario.get_dialog().remove_response(int(response_index))
     db.update_scenario(scenario_id, scenario)
+    #redirect to scenario page
     return redirect(url_for('view_scenario', scenario_id = scenario_id))
 
 
@@ -176,8 +188,9 @@ def add_question(scenario_id, response_index):
         return c
     
     scenario = db.get_scenario(scenario_id)
-    scenario.get_dialog().get_response(int(response_index)).add_question('')
+    scenario.get_dialog().get_response(int(response_index)).add_question('') #add a blank question to the response_node
     db.update_scenario(scenario_id, scenario)
+    #refresh page
     return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
 
 
@@ -191,9 +204,11 @@ def remove_question(scenario_id, response_index, question_index):
 
     scenario = db.get_scenario(scenario_id)
     response = scenario.get_dialog().get_response(int(response_index))
-    response.remove_question(int(question_index))
+    response.remove_question(int(question_index)) #remove question from response
     db.update_scenario(scenario_id, scenario)
+    #refresh page
     return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
+
 
 
 @app.route("/admin/scenario/new", methods = ['POST'])
@@ -203,7 +218,8 @@ def create_scenario():
         return c
 
     scen = Scenario()
-    scenario_id = db.add_scenario(scen)
+    scenario_id = db.add_scenario(scen) #add new scenario to db
+    #redirect to new scenario main page
     return redirect(url_for('view_scenario', scenario_id = scenario_id))
 
 
@@ -219,8 +235,10 @@ def import_scenario(scenario_id, scenario_old_id):
         return c
 
     scenario = db.get_scenario(scenario_old_id)
-    db.update_scenario(scenario_id, scenario)
+    db.update_scenario(scenario_id, scenario) #write old scenario to this scenario in db
+    #redirect to scenario main page
     return redirect(url_for('view_scenario', scenario_id = scenario_id))
+
 
 
 @app.route("/admin/scenario/remove_scenario/<scenario_id>", methods = ['POST'])
@@ -230,11 +248,14 @@ def remove_scenario(scenario_id):
         return c
 
     db.delete_scenario(scenario_id)
-    return redirect(url_for('admin'))
+    return redirect(url_for('admin')) #redirect up to admin page
+
 
 
 @app.route('/admin/scenario/add_neighbor/<scenario_id>/<response_index>/<neighbor_index>')
 def add_neighbor(scenario_id, response_index, neighbor_index):
+
+    #make sure response and neighbor are valid responses
     c = check_input(session.get('logged_in'), scenario_id, response_index)
     if c != '':
         return c
@@ -246,25 +267,28 @@ def add_neighbor(scenario_id, response_index, neighbor_index):
     scenario = db.get_scenario(scenario_id)
     response = scenario.get_dialog().get_response(int(response_index))
     neighbor = scenario.get_dialog().get_response(int(neighbor_index))
-    response.add_neighbor(neighbor)
+    response.add_neighbor(neighbor) #add neighbor to response
     db.update_scenario(scenario_id, scenario)
+    #redirect to response page
     return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
 
 
 
 @app.route('/admin/scenario/remove_neighbor/<scenario_id>/<response_index>/<neighbor_index>')
 def remove_neighbor(scenario_id, response_index, neighbor_index):
+    #neighbor index here is different from add_neighbor function, neighbor index is index in response neighbor list
     c = check_input(session.get('logged_in'), scenario_id, response_index, None, neighbor_index)
     if c != '':
         return c
-
 
     scenario = db.get_scenario(scenario_id)
     response = scenario.get_dialog().get_response(int(response_index))
 
     response.remove_neighbor(int(neighbor_index))
     db.update_scenario(scenario_id, scenario)
+    #redirect to response page
     return redirect(url_for('view_response', scenario_id = scenario_id, response_index = response_index))
+
 
 
 @app.route("/admin/reload_bots", methods=['POST'])
@@ -272,9 +296,12 @@ def reload_bots():
     c = check_input(session.get('logged_in'))
     if c != '':
         return c
-    manager.load_bots()
+    manager.load_bots() #reloads the bots to reflect most recent scenarios in DB
 
+    #refresh page
     return redirect(url_for('admin'))
+
+
 
 @app.route("/admin/export_db", methods=['POST'])
 def export_db():
@@ -282,8 +309,12 @@ def export_db():
     if c != '':
         return c
 
+    #create a pickle dump of the database, and store it in a file at /static/database.db
     pickle.dump(db.export_raw(), open("./static/database.db", "wb"))
+
+    #return the file, which will initiate a file download on user end
     return app.send_static_file('database.db')
+
 
 
 @app.route('/admin/import_db', methods = ['POST'])
@@ -292,13 +323,16 @@ def import_db():
     if c != '':
         return c
 
-    if request.method == 'POST':
-        f = request.files['file']
-        f.save("./uploads/" + secure_filename(f.filename))
-        data = pickle.load(open("./uploads/" + secure_filename(f.filename), "rb"))
-        db.import_raw(data)
-        os.remove("./uploads/" + secure_filename(f.filename))
-        return redirect(url_for('admin'))
+    #save file temporarily to /uploads/f.filename, then load the data from the file using pickle
+    f = request.files['file']
+    f.save("./uploads/" + secure_filename(f.filename))
+    data = pickle.load(open("./uploads/" + secure_filename(f.filename), "rb"))
+
+    db.import_raw(data)
+    os.remove("./uploads/" + secure_filename(f.filename)) #remove the temporary file
+    #redirect to main admin page
+    return redirect(url_for('admin'))
+
 
 
 @app.route('/admin/wipe_db', methods = ['POST'])
@@ -306,6 +340,7 @@ def wipe_db():
     c = check_input(session.get('logged_in'))
     if c != '':
         return c
+    #show user final warning to wipe database
     return render_template("wipe.html")
 
 
@@ -316,6 +351,7 @@ def do_wipe():
         return c
 
     db.wipe_db()
+    #redirect to main admin page
     return redirect(url_for('admin'))
 
 
@@ -344,10 +380,13 @@ def chat(scenario_id):
     results = session['results']
 
 
-    reply, prob_score, response_id, points = bot.reply(prev_response_id, s)[0]
+    reply, prob_score, response_id, points, count = bot.reply(prev_response_id, s)[0]
     response_node = scenario.get_dialog().get_response(response_id)
-    top_question = response_node.get_question(0)
-    if top_question == None:
+    top_question = ''
+    if response_node != None: #used when response_id == -1
+        top_question = response_node.get_question(0)
+        
+    if top_question == None: #if there are no questions in the response
         top_question = ''
 
     #this check is needed to give user points only the first time it hits this response
@@ -357,8 +396,8 @@ def chat(scenario_id):
     else:
         points = 0
 
-    new_result = (s, reply, top_question, points)
-    results.append(new_result)
+    new_result = (s, reply, top_question, points) 
+    results.append(new_result) #result list will be the rows of the results page
 
 
     #update session data
@@ -377,6 +416,7 @@ def chat_results(scenario_id):
     if c != '':
         return c
     scenario = db.get_scenario(scenario_id)
+    #show results page
     return render_template('result_view.html', score = session['score'], 
                             results = session['results'], scenario = scenario, scenario_id = scenario_id)
 
@@ -388,9 +428,10 @@ def chat_results_pdf(scenario_id):
         return c
 
     scenario = db.get_scenario(scenario_id)
+    #get the data for the page, and redirect it to rende_pdf method
     html = render_template('result_pdf.html', score = session['score'],
                             results = session['results'], scenario = scenario, scenario_id = scenario_id)
-    return render_pdf(HTML(string=html))
+    return render_pdf(HTML(string = html))
 
 
 

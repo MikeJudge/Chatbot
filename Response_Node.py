@@ -60,6 +60,7 @@ class Response_Node:
 
 	#input: Response_Node to be a new neighbor to this
 	def add_neighbor(self, neighbor):
+		#neighbor_list cannot contain duplicates and can't be a neighbor to itself
 		if neighbor not in self.neighbors and neighbor != self:
 			self.neighbors.append(neighbor)
 

@@ -4,8 +4,9 @@ class Scenario:
 
 	#input: name        - string of name of person in the scenario
 	#       description - string respresenting description of the scenario
-	#       image       - image of the person
+	#       image       - image of the person, stored as a string
 	#       dialog      - Dialog object representing the dialog in the conversation
+	#       video_link  - youtube video link for scenario
 
 	def __init__(self, name="", description="", image="", dialog = Dialog(), video_link = ""):
 		self.name = name
@@ -33,11 +34,11 @@ class Scenario:
 		return self.description
 
 
-	#input: image - image object
+	#input: image - image string
 	def set_image(self, image):
 		self.image = image
 
-	#output: image object
+	#output: image string
 	def get_image(self):
 		return self.image
 

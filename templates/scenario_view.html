@@ -2,11 +2,18 @@
     <button type="submit">Home</button>
 </form>
 
+Image: <br> <img height="240" src="data:image/png;base64,{{ scenario.get_image() }}"/> <br> <br>
+
+<form action = {{ url_for('upload_image', scenario_id = scenario_id) }} method = "POST" 
+      enctype = "multipart/form-data">
+      <input type = "file" name = "file" />
+      <button type="submit">Upload Image</button>
+</form>
+
 <form method="POST">
   name: <input type="text" name="scenario_name" value="{{ scenario.get_name() }}"> <br> <br>
-  Description: <input type="text" name="scenario_description" value="{{ scenario.get_description() }}"> <br> <br>
-  Image: <br> <img src="data:image/png;base64,{{ scenario.get_image() }}"/> <br> <br>
-  Youtube Video URL: <input type="text" name="scenario_video_link" value="{{ scenario.get_video_link() }}"> <br> <br>
+  Description: <br> <textarea rows="4" cols="50" name="scenario_description" value="{{ scenario.get_description() }}"> </textarea> <br> <br>
+  Youtube Video URL: <input type="text" name="scenario_video_link" size = "50" value="{{ scenario.get_video_link() }}"> <br> <br>
   Total Points Possible: {{ scenario.get_dialog().get_total_points() }} <br> <br>
   responses: <br> <br>
 
@@ -22,11 +29,6 @@
   <input type="submit" value="Save">
 </form>
 
-<form action = {{ url_for('upload_image', scenario_id = scenario_id) }} method = "POST" 
-      enctype = "multipart/form-data">
-      <input type = "file" name = "file" />
-      <button type="submit">Upload Image</button>
-</form>
 
 <select onChange="window.location.href=this.value">
       <option value={{ url_for('view_scenario', scenario_id = scenario_id, scenario_list = scenario_list) }}>Import Scenario</option>

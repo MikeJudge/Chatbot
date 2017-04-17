@@ -4,6 +4,9 @@ from Dialog import Dialog
 from Response_Node import Response_Node
 from bson.objectid import ObjectId
 
+#input:  scenario - Scenario object
+#        doc      - dictionary
+#output: updated doc
 
 def scenario_to_doc(scenario, doc):
 	doc['name'] = scenario.get_name()
@@ -14,11 +17,14 @@ def scenario_to_doc(scenario, doc):
 
 	dialog = []
 	response_map = {}
+	#populate response_map with response_node:index
+	#we will use this data to serialize the dialog object
 	for i in xrange(len(scenario.get_dialog().get_responses())):
 		response_map[scenario.get_dialog().get_response(i)] = i
 
 	for response in scenario.get_dialog().get_responses():
 		neighbors = []
+		#response points to indices instead of objects in the serialization
 		for neighbor in response.get_neighbors():
 			neighbors.append(response_map[neighbor])
 
@@ -27,21 +33,23 @@ def scenario_to_doc(scenario, doc):
 	doc['dialog'] = dialog
 	return doc
 
-			
+#input:  doc - dictionary
+#output: Scenario object represented by doc
 
 def doc_to_scenario(doc):
 	dialog_data = doc['dialog']
 	dialog = []
 
+	#create dialog list, but neighbor_ids is temporary
 	for response_text, questions, neighbor_ids, points in dialog_data:
 		dialog.append(Response_Node(response_text, questions, neighbor_ids, points))
 
 	for response in dialog:
 		neighbors = []
-		neighbor_ids = response.get_neighbors()
+		neighbor_ids = response.get_neighbors() #indices of neighbors
 		for neighbor_id in neighbor_ids:
-			neighbors.append(dialog[neighbor_id])
-		response.set_neighbors(neighbors)
+			neighbors.append(dialog[neighbor_id]) #use indices to find neighbors
+		response.set_neighbors(neighbors) #store actual neighbors for this response
 
 	return Scenario(doc['name'], doc['description'], doc['image'], Dialog(dialog), doc['video_link'])
 
@@ -65,7 +73,6 @@ class Scenario_DB:
 		#run through each scenario in database and append (scenario_id, Scenario)
 		scenario_list = []
 		for scenario_doc in scenarios.find():
-			#pickle is used to construct Scenario from bson object
 			scenario_list.append((str(scenario_doc['_id']), doc_to_scenario(scenario_doc)))
 
 		client.close()
@@ -75,7 +82,7 @@ class Scenario_DB:
 
 
 	#input:  Scenario object
-	#output: scenario_id linked to this Scenario object (use this id to index into db)
+	#output: scenario_id linked to this Scenario object (use id to index into db)
 
 	def add_scenario(self, scenario):
 		client = MongoClient('localhost', 27017)
@@ -96,7 +103,7 @@ class Scenario_DB:
 		scenarios = client.scenario_database.scenarios
 
 		scenario_doc = scenarios.find_one({"_id": ObjectId(scenario_key)})
-		if scenario_doc == None:
+		if scenario_doc == None: #not found
 			return False
 
 		scenario_to_doc(scenario, scenario_doc) #update mapping with new Scenario object
@@ -126,7 +133,7 @@ class Scenario_DB:
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
-		if scenarios.find_one({"_id": ObjectId(scenario_key)}) == None:
+		if scenarios.find_one({"_id": ObjectId(scenario_key)}) == None: #not found
 			return None
 
 		scenario_doc = scenarios.find_one({"_id": ObjectId(scenario_key)})
@@ -134,7 +141,8 @@ class Scenario_DB:
 		client.close()
 		return scenario
 
-
+	
+	#wipe all data from database
 	def wipe_db(self):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
@@ -144,6 +152,7 @@ class Scenario_DB:
 
 		client.close()
 
+	#output: list of scenario docs
 	def export_raw(self):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
@@ -152,14 +161,17 @@ class Scenario_DB:
 		client.close()
 		return result
 
+
+	#input: raw_docs: list of scenario docs
 	def import_raw(self, raw_docs):
 		client = MongoClient('localhost', 27017)
 		scenarios = client.scenario_database.scenarios
 
 		for doc in raw_docs:
+			#if scenario is not in the database, then add it to DB
 			if scenarios.find_one({"_id": doc['_id']}) == None:
 				scenarios.insert_one(doc)
-			else:
+			else: #update entry in DB if already there
 				scenarios.save(doc)
 
 		client.close()

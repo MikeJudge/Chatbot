@@ -13,7 +13,7 @@ from nltk.stem.lancaster import LancasterStemmer
 def tokenize(line):
     stemmer = LancasterStemmer()
     result = line.lower().split()
-    for i in xrange(len(result)): #remove punctuation marks at end of sentence
+    for i in xrange(len(result)): #stem each token to make most of limited data
         result[i] = stemmer.stem(result[i])
     return result
 
@@ -116,19 +116,27 @@ class Bot:
         input_arr = tokenize(query) #preprocess input
         result = []
 
+
         #compute probability of response given this query, and previous reponse_id for all replies in KB
         for curr_reply, reply_probs, response_id, points in self.kb:
             total = float(0)
+            count = 0
 
             for token in input_arr:
                 if token in reply_probs:
                     total += reply_probs[token]
+                    count += 1
                 else:
                     total += reply_probs['<UNK>'] #special word used when we've never seen this token before
 
-            result.append((curr_reply, total + get_prob_trans(self.transition_prob, prev_response, response_id), response_id, points))
+            result.append((curr_reply, total + get_prob_trans(self.transition_prob, prev_response, response_id), response_id, points, count))
             
 
         #sort list from highest probability to lowest probability
         result.sort(key = lambda x: x[1], reverse = True)
+
+        #we are not going to give them points for gibberish, they must match some words
+        if len(result) > 0 and (result[0][4] *1.0) / len(input_arr) < 0.6:
+            return [("I'm not sure what you mean, try asking something else", 0, -1, 0, 0)]
+
         return result

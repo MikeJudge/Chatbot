@@ -38,12 +38,11 @@ class Dialog:
 	    #since we are deleting a response, all responses pointing to this response need to be updated
 	    response = self.responses[index]
 	    for curr_response in self.responses:
-	    	print self.responses
 	    	for i in xrange(len(curr_response.get_neighbors())):
+	    		#if a response in the dialog points to the soon to be deleted response, then remove the reference
 	    		if curr_response.get_neighbor(i) == response:
 	    			curr_response.remove_neighbor(i)
 	    			break
-	    print self.responses
 	    del self.responses[index]
 	    self.set_total_points() #update total points
 
