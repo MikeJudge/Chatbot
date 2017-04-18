@@ -370,7 +370,7 @@ def chat(scenario_id):
         session['score'] = 0
         session['prev_response_ids'] = []
         session['results'] = []
-        return render_template('chat.html', scenario = scenario)
+        return render_template('chat.html', score = 0, scenario = scenario, scenario_id = scenario_id, results = [])
 
     #Post part
     s = request.form['input_text'] #get input from user

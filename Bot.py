@@ -14,6 +14,8 @@ def tokenize(line):
     stemmer = LancasterStemmer()
     result = line.lower().split()
     for i in xrange(len(result)): #stem each token to make most of limited data
+        if not result[i][-1].isalnum(): #remove punctuation
+            result[i] = result[i][:-1]
         result[i] = stemmer.stem(result[i])
     return result
 

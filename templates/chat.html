@@ -1,48 +1,122 @@
-{% if results %}
-  <ul id="message_list">
-     {% for result in results %}
-        <li>
-           <div class="text">
-              User: {{ result[0] }}
-           </div>
 
-           <div class="text">
-             {{ scenario.get_name() }}: {{ result[1] }}
-           </div>
-        </li>
-     {% endfor %}
-  </ul>
+<style>
+    #description_pane {
+      width: 400px;
+      float: left;
+    }
+    #chat_pane {
+      margin-left: 400px;
+      background-color: LightGrey;
+      max-width: 700px;
+      padding: 10px; 
+    }
 
-  <div class="text">
-        Points: {{ score }} out of {{ scenario.get_dialog().get_total_points() }} <br>
-  </div>
+    #message_list {
+      overflow-y: scroll;
+      min-height: 500px;
+      max-height: 500px;
+      overflow-wrap: break-word;
+    }
 
-{% endif %}
+    #bot_message {
+      border-radius: 25px;
+      padding: 10px; 
+      float: left;
+      background-color: DodgerBlue;
+      color: white;
+    }
 
-<div class="text">
+    #user_message {
+      border-radius: 25px;
+      padding: 10px;
+      float: right;
+      background-color: white
+    }
+
+    #message_input {
+      width: 80%;
+      height: 50px;
+      float: left;
+    }
+
+    #submit_button {
+      width: 20%;
+      height: 50px;
+      float: right;
+    }
+
+    .clear {
+      clear: both;
+    }
+</style>
+
+
+<body>
+  <div id="container">
+    <div id="description_pane">
+      <div class="text">
         Name: {{ scenario.get_name() }} <br>
-</div>
+      </div>
 
-<div class="text">
+      <div class="text">
         Description: {{ scenario.get_description() }} <br>
-</div>
+      </div>
 
 
-Image: <br> <img height="240" src="data:image/png;base64,{{ scenario.get_image() }}"/> <br> <br>
+      Image: <br> <img width="320" src="data:image/png;base64,{{ scenario.get_image() }}"/> <br> <br>
 
 
-{% if scenario.get_video_link() != '' %}
-  Video: <br> <iframe height="240"
-  src={{scenario.get_video_link()}}>
-  </iframe>
-{% endif %}
+      {% if scenario.get_video_link() != '' %}
+        Video: <br> <iframe width="320"
+        src={{scenario.get_video_link()}}>
+        </iframe>
+      {% endif %}
+    </div>
 
-<form method="POST">
-  <input type="text" name="input_text">
-  <input type="submit" value="send">
-</form>
 
-<form method="POST" action = {{ url_for('chat_results', scenario_id = scenario_id) }}>
-    <button type="submit">End Conversation</button>
-</form>
+
+    <div id="chat_pane">
+      
+      <div id="message_list">
+          {% for result in results %}
+                <div id = "user_message">
+                  User: {{ result[0] }}
+                </div>
+                <div class="clear"></div>
+                <div id = "bot_message">
+                  {{ scenario.get_name() }}: {{ result[1] }}
+                </div>
+                <div class="clear"></div>
+          {% endfor %}
+      </div>
+
+        <div class="text">
+              Points: {{ score }} out of {{ scenario.get_dialog().get_total_points() }} <br>
+        </div>
+
+      
+
+      <form method="POST">
+        <textarea id="message_input" name="input_text"></textarea>
+        <input type="submit" id="submit_button" value="send">
+      </form>
+
+      <form method="POST" action = {{ url_for('chat_results', scenario_id = scenario_id) }}>
+          <button type="submit">End Conversation</button>
+      </form>
+    </div>
+    <div class="clear"></div>
+  </div>
+</body>
+
+
+
+
+<script type="text/javascript">
+  var objDiv = document.getElementById("message_list");
+  objDiv.scrollTop = objDiv.scrollHeight;
+</script>
+
+
+
 

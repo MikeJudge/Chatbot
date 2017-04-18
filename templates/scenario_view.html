@@ -12,7 +12,7 @@ Image: <br> <img height="240" src="data:image/png;base64,{{ scenario.get_image()
 
 <form method="POST">
   name: <input type="text" name="scenario_name" value="{{ scenario.get_name() }}"> <br> <br>
-  Description: <br> <textarea rows="4" cols="50" name="scenario_description" value="{{ scenario.get_description() }}"> </textarea> <br> <br>
+  Description: <br> <textarea rows="4" cols="50" name="scenario_description">{{ scenario.get_description() }}</textarea> <br> <br>
   Youtube Video URL: <input type="text" name="scenario_video_link" size = "50" value="{{ scenario.get_video_link() }}"> <br> <br>
   Total Points Possible: {{ scenario.get_dialog().get_total_points() }} <br> <br>
   responses: <br> <br>
