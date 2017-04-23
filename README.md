@@ -2,9 +2,9 @@
 Chatbot for Active Listening
 To install:
 
-1: Download the project\n
-2: Install pip\n
-3. Install mongodb, https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/\n
+1. Download the project
+2. Install pip
+3. Install mongodb, https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/
 4. Execute the following commands from the command line
 5. sudo pip install flask
 6. sudo pip install nltk
